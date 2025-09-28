@@ -1,203 +1,173 @@
-// components/RegistrationTable.js
 "use client"; // This is a client component, necessary for useState and event handlers
 
-import Image from "next/image";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
-import { useRouter } from "next/navigation"; // Import useRouter
+import React, { useState } from 'react';
 
-// Assuming 'eye.svg' is in your public/icon directory
-import eyeIcon from "../../public/icon/eye.svg";
-
-// Dummy data updated to match the new table structure
-const dummyRows = [
+// Dummy data structured to match the design in the image
+const initialUsers = [
   {
-    id: "reg-001",
-    membershipId: "1234",
-    name: "Robo Gladiators",
-    avatar: "/path/to/avatar.png", // Add a path to a placeholder or real avatar
-    email: "robo.g@gmail.com",
-    registrationDate: "March 15, 2024",
+    id: 1,
+    name: "John Doe",
+    avatar: "https://placehold.co/40x40/EFEFEF/333?text=JD",
+    role: "ChatterBee User",
+    email: "hello@example.com",
+    status: "Active",
   },
   {
-    id: "reg-002",
-    membershipId: "1235",
-    name: "Tech Titans",
-    avatar: "/path/to/avatar.png",
-    email: "titans.tech@gmail.com",
-    registrationDate: "March 16, 2024",
+    id: 2,
+    name: "Alex Carter",
+    avatar: "https://placehold.co/40x40/EFEFEF/333?text=AC",
+    role: "Caregiver",
+    email: "hello@example.com",
+    status: "Active",
   },
   {
-    id: "reg-003",
-    membershipId: "1236",
-    name: "Circuit Breakers",
-    avatar: "/path/to/avatar.png",
-    email: "circuit.breakers@gmail.com",
-    registrationDate: "March 17, 2024",
-  },
-  {
-    id: "reg-004",
-    membershipId: "1237",
-    name: "Voltage Vipers",
-    avatar: "/path/to/avatar.png",
-    email: "vipers@gmail.com",
-    registrationDate: "March 18, 2024",
+    id: 3,
+    name: "Mia Johnson",
+    avatar: "https://placehold.co/40x40/EFEFEF/333?text=MJ",
+    role: "ChatterBee User",
+    email: "hello@example.com",
+    status: "Inactive",
   },
 ];
 
-export default function RiderRegistration() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredRows, setFilteredRows] = useState(dummyRows);
-  const router = useRouter(); // Initialize useRouter
-
-  // Function to handle search input changes
-  const handleSearchChange = (e) => {
-    const term = e.target.value.toLowerCase();
-    setSearchTerm(term);
-
-    const newFilteredRows = dummyRows.filter(
-      (row) =>
-        row.membershipId.toLowerCase().includes(term) || // Search by Membership ID
-        row.name.toLowerCase().includes(term) ||
-        row.email.toLowerCase().includes(term) ||
-        row.registrationDate.toLowerCase().includes(term)
-    );
-    setFilteredRows(newFilteredRows);
-  };
-
-  // Original Action handlers
-  const handleView = (rowId) => {
-    router.push(`/admin/rider-registrations/${rowId}`); // Navigate to the dynamic details page
-  };
-
-  const handleDelete = (rowId) => {
-    if (confirm(`Are you sure you want to delete ${rowId}?`)) {
-      alert(`Deleting: ${rowId}`);
-      // Implement actual deletion logic, e.g., update state or call API
-      setFilteredRows((prevRows) => prevRows.filter((row) => row.id !== rowId));
-    }
-  };
-
-  const handleEdit = (rowId) => {
-    alert(`Editing: ${rowId}`);
-    // Implement edit form/modal logic here
-  };
-
-
-  const handleFilterClick = () => {
-    alert("Filter button clicked! (Implement your filter modal/logic here)");
-  };
-
+// A simple modal component for confirmation
+const ConfirmationModal = ({ message, onConfirm, onCancel }) => {
   return (
-    <div style={{ boxShadow: '0px 4px 14.7px 0px rgba(0, 0, 0, 0.25)' }} className="bg-white p-4 rounded-lg shadow-lg">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-[20px] font-semibold text-black">
-          Rider Registrations
-        </h2>
-
-        {/* Search Input Field and Filter Button */}
-        <div className="flex items-center">
-          <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[#A4A4A4]" />
-            <input
-              type="text"
-              placeholder="Search"
-              className="pl-10 pr-4 py-2 text-[#0f0f0f] rounded-tl-[7.04px] rounded-bl-[7.04px] border-[1px] border-[#0000001A] text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-              value={searchTerm}
-              onChange={handleSearchChange}
-            />
-          </div>
-
+    <div className="fixed inset-0 bg-black/80 bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+        <p className="text-lg text-gray-800 mb-4">{message}</p>
+        <div className="flex justify-end gap-4">
           <button
-            onClick={handleFilterClick}
-            className="hover:bg-gray-700 transition-colors bg-[#C12722] p-[5px] rounded-tr-[7.04px] rounded-br-[7.04px]"
+            onClick={onCancel}
+            className="px-4 py-2 rounded-md text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="25"
-              viewBox="0 0 24 25"
-              fill="none"
-            >
-              <path d="M11 8.5L20 8.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M4 16.5L14 16.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-              <ellipse cx="7" cy="8.5" rx="3" ry="3" transform="rotate(90 7 8.5)" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-              <ellipse cx="17" cy="16.5" rx="3" ry="3" transform="rotate(90 17 16.5)" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-md text-white bg-red-500 hover:bg-red-600 transition-colors"
+          >
+            Confirm
           </button>
         </div>
       </div>
-      
+    </div>
+  );
+};
+
+
+export default function UserList() {
+  const [users, setUsers] = useState(initialUsers);
+  const [userToDelete, setUserToDelete] = useState(null);
+
+  // Handlers for actions
+  const handleBlock = (userId) => {
+    // In a real app, you'd call an API here.
+    // For this example, we'll just log it.
+    console.log(`Block action for user ID: ${userId}`);
+    // You could also update the user's status in the state if needed
+  };
+
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user);
+  };
+  
+  const confirmDelete = () => {
+    if (userToDelete) {
+      setUsers(prevUsers => prevUsers.filter(user => user.id !== userToDelete.id));
+      setUserToDelete(null); // Close the modal
+    }
+  };
+
+  const cancelDelete = () => {
+    setUserToDelete(null); // Close the modal
+  };
+
+
+  // Function to render status badge
+  const StatusBadge = ({ status }) => {
+    const baseClasses = "px-3 py-1 text-xs font-medium rounded-md";
+    if (status === "Active") {
+      return <span className={`${baseClasses} bg-[#E9F7EF] text-[#2D8A5A]`}>Active</span>;
+    }
+    return <span className={`${baseClasses} bg-[#FBEBEE] text-[#B53D4D]`}>Inactive</span>;
+  };
+
+  return (
+    <div className="p-4 sm:p-6 bg-white rounded-lg" style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)' }}>
+       {userToDelete && (
+        <ConfirmationModal
+          message={`Are you sure you want to delete ${userToDelete.name}?`}
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+        />
+      )}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-xl font-semibold text-gray-800">User List</h1>
+        <button className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-md border border-gray-200 hover:bg-gray-100 transition-colors">
+          See More
+        </button>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="text-white bg-[#C12722] border-b border-gray-700 ">
-              <th className="py-3 px-4 font-bold text-[14px] text-center">Membership ID</th>
-              <th className="py-3 px-4 font-bold text-[14px] text-center">Name</th>
-              <th className="py-3 px-4 font-bold text-[14px] text-center">Email</th>
-              <th className="py-3 px-4 font-bold text-[14px] text-center">Registration Date</th>
-              <th className="py-3 px-4 font-bold text-[14px] text-center">Action</th>
+            <tr className="border-b border-gray-200 text-gray-500">
+              <th className="py-3 px-4 font-medium">Name</th>
+              <th className="py-3 px-4 font-medium">Role</th>
+              <th className="py-3 px-4 font-medium">Email</th>
+              <th className="py-3 px-4 font-medium">Status</th>
+              <th className="py-3 px-4 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredRows.length > 0 ? (
-              filteredRows.map((row) => (
-                <tr key={row.id} className="border-b border-gray-200 text-black hover:bg-gray-50">
-                  <td className="py-3 px-4 text-center">{row.membershipId}</td>
-                  <td className="py-3 px-4 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                         {/* This shows the first letter of the name as a fallback avatar */}
-                        <span className="text-sm font-semibold text-gray-600">
-                          {row.name.charAt(0)}
-                        </span>
-                      </div>
-                      <span>{row.name}</span>
-                    </div>
+            {users.length > 0 ? (
+              users.map((user) => (
+            <tr key={user.id} className="border-b border-gray-200 last:border-b-0">
+                  <td className="py-4 px-4">
+              <div className="flex items-center gap-3">
+                      <img
+                src={user.avatar}
+                        alt={`${user.name}'s avatar`}
+           className="w-10 h-10 rounded-full object-cover"
+                        onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/40x40/EFEFEF/333?text=??'; }}
+                />
+                      <span className="font-medium text-gray-800">{user.name}</span>
+              </div>
                   </td>
-                  <td className="py-3 px-4 text-center">{row.email}</td>
-                  <td className="py-3 px-4 text-center">{row.registrationDate}</td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center justify-center gap-2">
-                      {/* Original Action Icons Restored */}
-                      <Image
-                        className="cursor-pointer"
-                        src="/icon/right.svg" // Assuming this is your edit icon
-                        alt="Edit"
-                        width={26}
-                        height={26}
-                        onClick={() => handleEdit(row.id)}
-                      />
-                      <Image
-                        className="cursor-pointer"
-                        src="/icon/trash.svg"
-                        alt="Delete"
-                        width={26}
-                        height={26}
-                        onClick={() => handleDelete(row.id)}
-                      />
-                      <Image
-                        className="cursor-pointer"
-                        src={eyeIcon}
-                        alt="View"
-                        width={26}
-                        height={26}
-                        onClick={() => handleView(row.id)}
-                      />
+             <td className="py-4 px-4 text-gray-600">{user.role}</td>
+                  <td className="py-4 px-4 text-gray-600">{user.email}</td>
+             <td className="py-4 px-4">
+                    <StatusBadge status={user.status} />
+            </td>
+                  <td className="py-4 px-4">
+            <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => handleBlock(user.id)}
+               className="px-4 py-2 text-sm font-medium rounded-md bg-[#FFF8E6] text-[#D4A12F] hover:bg-opacity-80 transition-colors"
+                      >
+                        Block
+                      </button>
+                 <button 
+                  onClick={() => handleDeleteClick(user)}
+                        className="px-4 py-2 text-sm font-medium rounded-md bg-[#FBEBEE] text-[#B53D4D] hover:bg-opacity-80 transition-colors"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="text-center py-4 text-gray-400">
-                  No matching registrations found.
+                <td colSpan="5" className="text-center py-8 text-gray-500">
+                  No users found.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-    </div>
+    </div> 
   );
 }

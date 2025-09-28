@@ -18,7 +18,7 @@ const activityData = [
   { name: 'Mar', value: 85 },
   { name: 'Apr', value: 75 },
   { name: 'May', value: 95 },
-  { name: 'Jun', value: 115 },
+  { name: 'Jun', value: 115 }, 
   { name: 'Jul', value: 82 },
   { name: 'Aug', value: 90 },
   { name: 'Sep', value: 80 },

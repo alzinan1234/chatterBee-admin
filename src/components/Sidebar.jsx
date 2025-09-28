@@ -33,8 +33,8 @@ const navItems = [
 
   { name: "User Management", href: "/admin/user-management", icon: Users },
   { name: "Earning", href: "/admin/earning", icon: Wallet },
-  { name: "Rider Management", href: "/admin/rider-management", icon: Bike },
-  { name: 'Restaurant Management', href: '/admin/restaurant-management', icon: Utensils },
+  // { name: "Rider Management", href: "/admin/rider-management", icon: Bike },
+  { name: ' Button & Categoary', href: '/admin/restaurant-management', icon: Utensils },
   // { name: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
   { name: "Support", href: "/admin/support", icon: HelpCircle },
   {
