@@ -40,8 +40,8 @@ const navItems = [
     icon: Utensils,
     hasDropdown: true,
     dropdownItems: [
-      { name: "Category", href: "/admin/category" },
-      { name: "Button", href: "/admin/button" }
+      { name: "Category", href: "/admin/button-categoary/category" },
+      { name: "Button", href: "/admin/button-categoary/button" }
     ]
   },
   // { name: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },

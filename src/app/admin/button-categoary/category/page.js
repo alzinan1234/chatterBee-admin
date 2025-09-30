@@ -1,9 +1,10 @@
+import Categoary from '@/components/Button-Categoary/Categoary/Categoary'
 import React from 'react'
 
 const page = () => {
   return (
     <div>
-      <h1>Button & Category Management</h1>
+      <Categoary/>
     </div>
   )
 }
