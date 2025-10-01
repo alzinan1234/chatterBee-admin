@@ -19,6 +19,7 @@ import {
   Utensils,
   ChevronDown,
   ChevronRight,
+  CirclePower,
 } from "lucide-react";
 import Image from "next/image";
 import dreckks from "../../public/tika-food.svg";
@@ -26,30 +27,30 @@ import barss from "../../public/icon/bars.png";
 
 const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  {
-    name: "Rider Registrations",
-    href: "/admin/rider-registrations",
-    icon: FileText,
-  },
+  // {
+  //   name: "Rider Registrations",
+  //   href: "/admin/rider-registrations",
+  //   icon: FileText,
+  // },
   { name: "User Management", href: "/admin/user-management", icon: Users },
-  { name: "Earning", href: "/admin/earning", icon: Wallet },
+  // { name: "Earning", href: "/admin/earning", icon: Wallet },
   // { name: "Rider Management", href: "/admin/rider-management", icon: Bike },
   { 
     name: 'Button & Category', 
     href: '/admin/button-categoary', 
-    icon: Utensils,
+    icon: CirclePower,
     hasDropdown: true,
     dropdownItems: [
       { name: "Category", href: "/admin/button-categoary/category" },
       { name: "Button", href: "/admin/button-categoary/button" }
     ]
   },
-  // { name: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
-  { name: "Support", href: "/admin/support", icon: HelpCircle },
+  { name: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
+  // { name: "Support", href: "/admin/support", icon: HelpCircle },
   {
-    name: "Withdrawal Requests",
-    href: "/admin/withdrawal-requests",
-    icon: BanknoteArrowDown,
+    name: "Notifications",
+    href: "/admin/notifications",
+    icon: Bell,
   },
   // { name: 'Notifications', href: '/admin/notifications', icon: Bell },
   { name: "Settings", href: "/admin/settings", icon: Settings },

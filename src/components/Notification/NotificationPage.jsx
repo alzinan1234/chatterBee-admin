@@ -134,20 +134,20 @@ const NotificationPage = ({ onBackClick }) => {
           >
             <ArrowLeftIcon className="h-6 w-6" />
           </button>
-          <h1 className="text-[24px] font-medium">Notification</h1> {/* Text is already black from parent */}
+          <h1 className="text-[24px] font-medium">Notification</h1> 
         </div>
-        <div className="flex items-center">
+        {/* <div className="flex items-center">
           <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" /> {/* Adjusted icon color */}
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" /> 
             <input
               type="text"
               placeholder="Search"
-              className="pl-10 pr-4 py-2 bg-gray-100 rounded-tl-[7.04px] rounded-bl-[7.04px] border-[1px] border-gray-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-black" // Changed bg, border, and added text-black
+              className="pl-10 pr-4 py-2 bg-gray-100 rounded-tl-[7.04px] rounded-bl-[7.04px] border-[1px] border-gray-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-black" 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="bg-[#B92921] p-[5px] hover:bg-gray-300 transition-colors"> {/* Changed bg to gray-200, hover to gray-300 */}
+          <button className="bg-[#B92921] p-[5px] hover:bg-gray-300 transition-colors"> 
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -157,13 +157,13 @@ const NotificationPage = ({ onBackClick }) => {
             >
               <path
                 d="M11 8.5L20 8.5"
-                stroke="white" // Changed stroke to black
+                stroke="white" 
                 strokeWidth="1.5"
                 strokeLinecap="round"
               />
               <path
                 d="M4 16.5L14 16.5"
-                stroke="white" // Changed stroke to black
+                stroke="white" 
                 strokeWidth="1.5"
                 strokeLinecap="round"
               />
@@ -173,7 +173,7 @@ const NotificationPage = ({ onBackClick }) => {
                 rx="3"
                 ry="3"
                 transform="rotate(90 7 8.5)"
-                stroke="white" // Changed stroke to black
+                stroke="white" 
                 strokeWidth="1.5"
                 strokeLinecap="round"
               />
@@ -183,13 +183,13 @@ const NotificationPage = ({ onBackClick }) => {
                 rx="3"
                 ry="3"
                 transform="rotate(90 17 16.5)"
-                stroke="white" // Changed stroke to black
+                stroke="white" 
                 strokeWidth="1.5"
                 strokeLinecap="round"
               />
             </svg>
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Notification List Container */}

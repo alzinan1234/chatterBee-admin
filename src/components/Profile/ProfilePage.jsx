@@ -81,7 +81,7 @@ export default function ProfilePage() {
             <button
               className={`py-2 px-6 text-[16px] font-semibold ${
                 activeTab === "editProfile"
-                  ? "border-b-2 border-[#DD0F14] text-[#DD0F14]"
+                  ? "border-b-2 border-[#FDD268] text-[#000000]"
                   : "text-gray-600 hover:text-gray-900" // Adjusted text color for non-active tabs
               }`}
               onClick={() => setActiveTab("editProfile")}
@@ -91,7 +91,7 @@ export default function ProfilePage() {
             <button
               className={`py-2 px-6 text-[16px] font-semibold ${
                 activeTab === "changePassword"
-                  ? "border-b-2 border-[#DD0F14] text-[#DD0F14]"
+                  ? "border-b-2 border-[#FDD268] text-[#000000]"
                   : "text-gray-600 hover:text-gray-900" // Adjusted text color for non-active tabs
               }`}
               onClick={() => setActiveTab("changePassword")}
@@ -156,7 +156,7 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-center mt-6">
                   <button
                     type="submit"
-                    className="bg-[#DD0F14] hover:bg-opacity-80 text-white font-bold w-full py-3 px-4 rounded-[4px] focus:outline-none focus:shadow-outline"
+                    className="bg-[#FDD268] hover:bg-opacity-80 text-black font-bold w-full py-3 px-4 rounded-[4px] focus:outline-none focus:shadow-outline"
                     
                   >
                     Save Changes

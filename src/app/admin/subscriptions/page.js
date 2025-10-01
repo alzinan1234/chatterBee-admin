@@ -1,5 +1,5 @@
 
-import SubscriptionsPage from '@/components/Subscriptions/SubscriptionsPage'
+import SubscriptionsPage from '@/components/Subscriptions/SubscriptionManagementPage'
 import React from 'react'
 
 const page = () => {

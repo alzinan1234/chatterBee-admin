@@ -244,17 +244,17 @@ const ButtonList = ({ buttons, categories, onEdit, onDelete, selectedCategory, o
                     <thead>
                         <tr className="border-b">
                             <th className="text-left p-4 font-semibold text-gray-600">Button Text</th>
-                            <th className="text-left p-4 font-semibold text-gray-600">Image</th>
-                            <th className="text-left p-4 font-semibold text-gray-600">Actions</th>
+                            <th className="text-center p-4 font-semibold text-gray-600">Image</th>
+                            <th className="text-center p-4 font-semibold text-gray-600">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {buttons.map(button => (
                             <tr key={button.id} className="border-b hover:bg-gray-50">
                                 <td className="p-4 text-gray-800">{button.name}</td>
-                                <td className="p-4"><img src={button.imageUrl} alt={button.name} className="h-10 w-10 object-cover rounded-md" onError={(e) => { e.target.src = 'https://placehold.co/40x40/FFCDD2/F44336?text=Error'; }} /></td>
+                                <td className="p-4"><img src={button.imageUrl} alt={button.name} className="h-10 w-10 mx-auto object-cover rounded-md" onError={(e) => { e.target.src = 'https://placehold.co/40x40/FFCDD2/F44336?text=Error'; }} /></td>
                                 <td className="p-4">
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 items-center justify-center">
                                         <button onClick={() => onEdit(button)} className="px-4 py-1.5 bg-teal-100 text-teal-700 rounded-lg text-sm font-semibold hover:bg-teal-200 transition">Edit</button>
                                         <button onClick={() => onDelete(button.id)} className="px-4 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-200 transition">Delete</button>
                                     </div>
@@ -369,7 +369,7 @@ export default function ButtonManagementApp() {
     };
 
     return (
-        <div className="bg-gray-50 min-h-screen font-sans p-4 sm:p-6 lg:p-8">
+        <div className=" min-h-screen font-sans p-4 sm:p-6 lg:p-8">
             <div className="container mx-auto">
                 <header className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-800">Button Management</h1>

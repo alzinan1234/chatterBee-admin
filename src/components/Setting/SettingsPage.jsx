@@ -92,13 +92,13 @@ const SettingsPage = ({ onBackClick }) => {
             <button
               key={tabId}
               className={`flex-shrink-0 px-4 py-4 text-lg font-medium relative ${
-                activeTab === tabId ? 'text-[#DD0F14]' : 'text-gray-600 hover:text-black' // Adjusted text colors
+                activeTab === tabId ? 'text-[#000000]' : 'text-gray-600 hover:text-black' // Adjusted text colors
               }`}
               onClick={() => setActiveTab(tabId)}
             >
               {tabContents[tabId].title}
               {activeTab === tabId && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] -mb-[1px] bg-[#DD0F14]"></span>
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] -mb-[1px] bg-[#FDD268]"></span>
               )}
             </button>
           ))}
@@ -125,7 +125,7 @@ const SettingsPage = ({ onBackClick }) => {
           <button
             type="button"
             onClick={handleSaveAndChange}
-            className="w-full mx-auto flex justify-center items-center rounded-[4px] bg-[#DD0F14] hover:bg-red-700 text-white py-2 font-medium" // Adjusted hover color
+            className="w-full mx-auto flex justify-center items-center rounded-[4px] bg-[#FDD268] hover:bg-[#FDD268] text-black py-2 font-medium" // Adjusted hover color
           >
             Save & Change
           </button>
