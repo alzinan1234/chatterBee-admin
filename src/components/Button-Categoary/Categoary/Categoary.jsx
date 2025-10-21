@@ -215,17 +215,54 @@ const EditCategory = ({ category, onUpdateCategory, onCancel }) => {
  */
 const CategoryList = ({ categories, onEdit, onDelete }) => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(categories.length / itemsPerPage);
+
+  // Filter categories based on search query
+  const filteredCategories = categories.filter(category => 
+    category.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentCategories = categories.slice(indexOfFirstItem, indexOfLastItem);
+  const currentCategories = filteredCategories.slice(indexOfFirstItem, indexOfLastItem);
 
   return (
-    <div className="p-8 rounded-xl shadow-lg w-full bg-white  border-gray-900">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Category List</h2>
-      <div className="overflow-x-auto  border">
+    <div className="p-8 rounded-xl shadow-lg w-full bg-white border-gray-900">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">Category List</h2>
+        <div className="relative">
+          <div className="flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2">
+            <input
+              type="text"
+              placeholder="Search categories..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1); // Reset to first page when searching
+              }}
+              className="outline-none w-64 text-sm text-gray-700 placeholder-gray-500"
+            />
+            <svg
+              className="w-5 h-5 text-gray-500 ml-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div className="overflow-x-auto border">
         <table className="w-full  text-sm ">
           <thead>
             <tr className=" border  border-gray-200 divide-y-reverse  bg-gray-50">
@@ -263,8 +300,13 @@ const CategoryList = ({ categories, onEdit, onDelete }) => {
             ))}
           </tbody>
         </table>
-        {categories.length === 0 && (
-          <p className="text-center text-gray-500 py-8">No categories found. Add one to get started!</p>
+        {filteredCategories.length === 0 && (
+          <p className="text-center text-gray-500 py-8">
+            {searchQuery 
+              ? `No categories found matching "${searchQuery}"`
+              : "No categories found. Add one to get started!"
+            }
+          </p>
         )}
         
         {/* Pagination */}
@@ -401,7 +443,7 @@ export default function Categoary() {
           )}
         </header>
 
-        <main className='w-full '>
+        <main className='w-full'>
           {renderContent()}
         </main>
       </div>

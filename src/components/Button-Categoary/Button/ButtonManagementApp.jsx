@@ -226,17 +226,48 @@ const ButtonForm = ({ onSave, onCancel, initialData }) => {
  * ButtonList Component
  * Displays the list of buttons with filtering and pagination.
  */
-const ButtonList = ({ buttons, categories, onEdit, onDelete, selectedCategory, onCategoryChange, currentPage, totalPages, onPageChange }) => {
+const ButtonList = ({ buttons, categories, onEdit, onDelete, selectedCategory, onCategoryChange, currentPage, totalPages, onPageChange, searchQuery, onSearchChange }) => {
     return (
         <div className="bg-white p-8 rounded-xl shadow-lg w-full">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">Button List</h2>
-                <div className="relative">
-                    <select value={selectedCategory} onChange={(e) => onCategoryChange(Number(e.target.value))} className="appearance-none w-48 bg-white border border-gray-300 rounded-lg py-2 pl-4 pr-8 text-black focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                        <option value={0}>All Categories</option>
-                        {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"><ChevronDownIcon /></div>
+                <div className="flex items-center gap-4">
+                    <h2 className="text-2xl font-bold text-gray-800">Button List</h2>
+                    <div className="relative">
+                        <select 
+                            value={selectedCategory} 
+                            onChange={(e) => onCategoryChange(Number(e.target.value))} 
+                            className="appearance-none w-48 bg-white border border-gray-300 rounded-lg py-2 pl-4 pr-8 text-black focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        >
+                            <option value={0}>All Categories</option>
+                            {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"><ChevronDownIcon /></div>
+                    </div>
+                </div>
+                <div className="relative w-64">
+                    <div className="flex items-center bg-white border border-gray-300 rounded-lg px-3 py-2">
+                        <input
+                            type="text"
+                            placeholder="Search buttons..."
+                            value={searchQuery}
+                            onChange={(e) => onSearchChange(e.target.value)}
+                            className="outline-none w-full text-sm text-gray-700 placeholder-gray-500"
+                        />
+                        <svg
+                            className="w-5 h-5 text-gray-500 ml-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
+                        </svg>
+                    </div>
                 </div>
             </div>
             <div className="overflow-x-auto">
@@ -263,7 +294,15 @@ const ButtonList = ({ buttons, categories, onEdit, onDelete, selectedCategory, o
                         ))}
                     </tbody>
                 </table>
-                {buttons.length === 0 && <p className="text-center text-gray-500 py-8">No buttons found for this category.</p>}
+                {buttons.length === 0 && (
+                    <p className="text-center text-gray-500 py-8">
+                        {searchQuery
+                            ? `No buttons found matching "${searchQuery}"${selectedCategory ? ' in this category' : ''}`
+                            : selectedCategory
+                            ? 'No buttons found in this category'
+                            : 'No buttons found'}
+                    </p>
+                )}
             </div>
             <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
         </div>
@@ -283,13 +322,24 @@ export default function ButtonManagementApp() {
     const [editingButton, setEditingButton] = React.useState(null);
     const [selectedCategory, setSelectedCategory] = React.useState(0);
     const [currentPage, setCurrentPage] = React.useState(1);
+    const [searchQuery, setSearchQuery] = React.useState('');
     const itemsPerPage = 8;
 
     // --- DERIVED STATE (Filtering & Pagination) ---
     const filteredButtons = React.useMemo(() => {
-        if (!selectedCategory) return buttons;
-        return buttons.filter(b => b.categoryId === selectedCategory);
-    }, [buttons, selectedCategory]);
+        return buttons.filter(button => {
+            // Apply category filter
+            const categoryMatch = !selectedCategory || button.categoryId === selectedCategory;
+            
+            // Apply search filter
+            const searchTerm = searchQuery.toLowerCase();
+            const searchMatch = !searchQuery || 
+                button.name.toLowerCase().includes(searchTerm) ||
+                button.speakAs.toLowerCase().includes(searchTerm);
+            
+            return categoryMatch && searchMatch;
+        });
+    }, [buttons, selectedCategory, searchQuery]);
 
     const totalPages = Math.ceil(filteredButtons.length / itemsPerPage);
     
@@ -364,6 +414,11 @@ export default function ButtonManagementApp() {
                     currentPage={currentPage}
                     totalPages={totalPages}
                     onPageChange={handlePageChange}
+                    searchQuery={searchQuery}
+                    onSearchChange={(value) => {
+                        setSearchQuery(value);
+                        setCurrentPage(1); // Reset to first page when searching
+                    }}
                 />;
         }
     };
