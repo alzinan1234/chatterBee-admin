@@ -1,8 +1,8 @@
 "use client";
 import React from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 
 // --- ICONS ---
-// A collection of SVG icons used throughout the application.
 const PlusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>;
 const UploadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>;
 const SpeakerIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>;
@@ -12,9 +12,7 @@ const ChevronDownIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className=
 const ChevronLeftIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>;
 const ChevronRightIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>;
 
-
 // --- MOCK DATA ---
-// Mock data for categories and buttons to simulate a real application.
 const CATEGORIES = [
     { id: 1, name: 'Food' },
     { id: 2, name: 'Animals' },
@@ -22,8 +20,6 @@ const CATEGORIES = [
     { id: 4, name: 'Places' },
 ];
 
-// --- UPDATED COLOR PALETTE ---
-// This is the new color array with your specified hex codes.
 const COLORS = [
     { name: 'Cream', value: '#FFF8E6', ring: 'ring-yellow-200' },
     { name: 'Light Pink', value: '#FFE2DE', ring: 'ring-red-200' },
@@ -36,12 +32,12 @@ const COLORS = [
     { name: 'Gold', value: '#FDD268', ring: 'ring-yellow-400' },
 ];
 
-// Generates a large list of buttons for demonstration.
 const generateInitialButtons = () => {
     const buttons = [];
     for (let i = 0; i < 40; i++) {
         const categoryId = (i % CATEGORIES.length) + 1;
-        const buttonName = `${CATEGORIES[categoryId - 1].name} Item ${Math.floor(i / CATEGORIES.length) + 1}`;
+        const categoryName = CATEGORIES[categoryId - 1].name;
+        const buttonName = `${categoryName} Item ${Math.floor(i / CATEGORIES.length) + 1}`;
         buttons.push({
             id: i + 1,
             name: buttonName,
@@ -54,13 +50,8 @@ const generateInitialButtons = () => {
     return buttons;
 };
 
-
 // --- HELPER & UI COMPONENTS ---
 
-/**
- * Pagination Component
- * Renders pagination controls with smart logic for displaying page numbers.
- */
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     const pageNumbers = React.useMemo(() => {
         if (totalPages <= 7) {
@@ -88,10 +79,6 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     );
 };
 
-/**
- * Custom Color Select Component
- * A styled dropdown for selecting a color option.
- */
 const ColorSelect = ({ selectedColor, setSelectedColor }) => {
     const [isOpen, setIsOpen] = React.useState(false);
 
@@ -113,7 +100,7 @@ const ColorSelect = ({ selectedColor, setSelectedColor }) => {
                 <ChevronDownIcon />
             </button>
             {isOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {COLORS.map(color => (
                         <div key={color.value} onClick={() => handleSelect(color)} className="px-4 py-2 flex items-center gap-3 hover:bg-gray-100 cursor-pointer">
                             <span className="h-4 w-4 rounded-full border border-gray-200" style={{ backgroundColor: color.value }}></span>
@@ -126,13 +113,8 @@ const ColorSelect = ({ selectedColor, setSelectedColor }) => {
     );
 };
 
-
 // --- FORM COMPONENT ---
 
-/**
- * ButtonForm Component
- * A versatile form for both adding and editing buttons.
- */
 const ButtonForm = ({ onSave, onCancel, initialData }) => {
     const isEditMode = !!initialData;
     const [word, setWord] = React.useState(initialData?.name || '');
@@ -150,20 +132,19 @@ const ButtonForm = ({ onSave, onCancel, initialData }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!word.trim() || !selectedColor) {
-            alert('Word and Color are required.');
+            toast.error('Word and Color are required to save the button.');
             return;
         }
         onSave({
             name: word,
-            speakAs: speakAs,
+            speakAs: speakAs.trim(),
             color: selectedColor,
             imageUrl: imagePreview,
         });
     };
     
     const handleActionIconClick = (action) => {
-        console.log(`${action} clicked`);
-        // In a real app, you would integrate text-to-speech or speech recognition here.
+        toast.success(`Simulating '${action}' action...`);
     };
 
     return (
@@ -178,7 +159,7 @@ const ButtonForm = ({ onSave, onCancel, initialData }) => {
                     <div>
                         <label htmlFor="speakAs" className="block text-sm font-medium text-gray-700 mb-2">Speak As</label>
                         <div className="relative">
-                            <input type="text" id="speakAs" value={speakAs} onChange={(e) => setSpeakAs(e.target.value)} placeholder="Speak As" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition text-black placeholder-gray-500" />
+                            <input type="text" id="speakAs" value={speakAs} onChange={(e) => setSpeakAs(e.target.value)} placeholder="Speak As (optional)" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition text-black placeholder-gray-500" />
                             <div className="absolute inset-y-0 right-0 flex items-center pr-3 space-x-2 text-gray-500">
                                 <button type="button" onClick={() => handleActionIconClick('Speak')} className="hover:text-yellow-500"><SpeakerIcon /></button>
                                 <button type="button" onClick={() => handleActionIconClick('Record')} className="hover:text-yellow-500"><MicrophoneIcon /></button>
@@ -192,7 +173,7 @@ const ButtonForm = ({ onSave, onCancel, initialData }) => {
                     <ColorSelect selectedColor={selectedColor} setSelectedColor={setSelectedColor} />
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Image/Icon</label>
-                        {isEditMode && imagePreview ? (
+                        {imagePreview ? (
                             <div className='flex items-center gap-4'>
                                 <img src={imagePreview} alt="Current" className="h-16 w-16 object-cover rounded-lg" />
                                 <label htmlFor="file-upload" className="cursor-pointer text-sm font-semibold text-yellow-600 hover:text-yellow-500 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition">Change Image/Icon</label>
@@ -201,7 +182,7 @@ const ButtonForm = ({ onSave, onCancel, initialData }) => {
                         ) : (
                             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
                                 <div className="space-y-1 text-center">
-                                    {imagePreview ? <img src={imagePreview} alt="Preview" className="mx-auto h-24 w-24 object-cover rounded-md" /> : <UploadIcon />}
+                                    <UploadIcon />
                                     <div className="flex text-sm text-gray-600"><label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-yellow-600 hover:text-yellow-500"><span>Upload Image</span><input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" /></label></div>
                                     <p className="text-xs text-gray-500">Image must be in JPG or PNG format</p>
                                 </div>
@@ -219,13 +200,8 @@ const ButtonForm = ({ onSave, onCancel, initialData }) => {
     );
 };
 
-
 // --- LIST COMPONENT ---
 
-/**
- * ButtonList Component
- * Displays the list of buttons with filtering and pagination.
- */
 const ButtonList = ({ buttons, categories, onEdit, onDelete, selectedCategory, onCategoryChange, currentPage, totalPages, onPageChange, searchQuery, onSearchChange }) => {
     return (
         <div className="bg-white p-8 rounded-xl shadow-lg w-full">
@@ -287,7 +263,7 @@ const ButtonList = ({ buttons, categories, onEdit, onDelete, selectedCategory, o
                                 <td className="p-4">
                                     <div className="flex gap-2 items-center justify-center">
                                         <button onClick={() => onEdit(button)} className="px-4 py-1.5 bg-teal-100 text-teal-700 rounded-lg text-sm font-semibold hover:bg-teal-200 transition">Edit</button>
-                                        <button onClick={() => onDelete(button.id)} className="px-4 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-200 transition">Delete</button>
+                                        <button onClick={() => onDelete(button.id, button.name)} className="px-4 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-200 transition">Delete</button>
                                     </div>
                                 </td>
                             </tr>
@@ -309,14 +285,9 @@ const ButtonList = ({ buttons, categories, onEdit, onDelete, selectedCategory, o
     );
 };
 
-
 // --- MAIN APP COMPONENT ---
 
-/**
- * The root component that manages all state and logic.
- */
 export default function ButtonManagementApp() {
-    // --- STATE MANAGEMENT ---
     const [buttons, setButtons] = React.useState(generateInitialButtons);
     const [view, setView] = React.useState('list');
     const [editingButton, setEditingButton] = React.useState(null);
@@ -325,18 +296,13 @@ export default function ButtonManagementApp() {
     const [searchQuery, setSearchQuery] = React.useState('');
     const itemsPerPage = 8;
 
-    // --- DERIVED STATE (Filtering & Pagination) ---
     const filteredButtons = React.useMemo(() => {
         return buttons.filter(button => {
-            // Apply category filter
             const categoryMatch = !selectedCategory || button.categoryId === selectedCategory;
-            
-            // Apply search filter
             const searchTerm = searchQuery.toLowerCase();
             const searchMatch = !searchQuery || 
                 button.name.toLowerCase().includes(searchTerm) ||
                 button.speakAs.toLowerCase().includes(searchTerm);
-            
             return categoryMatch && searchMatch;
         });
     }, [buttons, selectedCategory, searchQuery]);
@@ -347,8 +313,15 @@ export default function ButtonManagementApp() {
         const startIndex = (currentPage - 1) * itemsPerPage;
         return filteredButtons.slice(startIndex, startIndex + itemsPerPage);
     }, [filteredButtons, currentPage]);
+    
+    React.useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        } else if (currentPage > 1 && totalPages === 0) {
+            setCurrentPage(1);
+        }
+    }, [totalPages, currentPage]);
 
-    // --- EVENT HANDLERS / CRUD ---
     const handleCategoryChange = (categoryId) => {
         setSelectedCategory(categoryId);
         setCurrentPage(1);
@@ -361,29 +334,50 @@ export default function ButtonManagementApp() {
     const handleAddButton = (newButtonData) => {
         const newButton = {
             id: Date.now(),
-            categoryId: selectedCategory || CATEGORIES[0].id, // Default to first category if 'All' is selected
+            categoryId: selectedCategory || CATEGORIES[0].id,
             ...newButtonData,
         };
-        const updatedButtons = [...buttons, newButton];
-        setButtons(updatedButtons);
+        setButtons(prev => [...prev, newButton]);
         setView('list');
+        toast.success(`Button "${newButton.name}" added successfully!`);
     };
 
     const handleUpdateButton = (updatedButtonData) => {
         setButtons(buttons.map(b => b.id === editingButton.id ? { ...b, ...updatedButtonData } : b));
         setView('list');
         setEditingButton(null);
+        toast.success(`Button "${updatedButtonData.name}" updated successfully!`);
     };
 
-    const handleDeleteButton = (id) => {
-        if (window.confirm('Are you sure you want to delete this button?')) {
-            const updatedButtons = buttons.filter(b => b.id !== id);
-            setButtons(updatedButtons);
-            // Edge case: if on the last page and it becomes empty, go back one page.
-            if (currentPage > Math.ceil(updatedButtons.filter(b => !selectedCategory || b.categoryId === selectedCategory).length / itemsPerPage)) {
-                setCurrentPage(currentPage - 1 || 1);
-            }
-        }
+    const handleDeleteButton = (id, name) => {
+        toast((t) => (
+            <div className='flex flex-col'>
+                <span className='text-sm font-semibold text-gray-800'>Are you sure you want to delete <strong className='text-red-600'>"{name}"</strong>?</span>
+                <div className='flex justify-end gap-2 mt-3'>
+                    <button 
+                        onClick={() => toast.dismiss(t.id)} 
+                        className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300 transition"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onClick={() => {
+                            const updatedButtons = buttons.filter(b => b.id !== id);
+                            setButtons(updatedButtons);
+                            toast.dismiss(t.id);
+                            toast.success(`Button "${name}" deleted.`);
+                        }} 
+                        className="px-3 py-1 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600 transition"
+                    >
+                        Delete
+                    </button>
+                </div>
+            </div>
+        ), { 
+            icon: '🗑️', 
+            duration: 6000,
+            style: { minWidth: '300px' } 
+        });
     };
     
     const handleEditClick = (button) => {
@@ -396,7 +390,6 @@ export default function ButtonManagementApp() {
         setEditingButton(null);
     };
 
-    // --- RENDER LOGIC ---
     const renderContent = () => {
         switch (view) {
             case 'add':
@@ -417,14 +410,15 @@ export default function ButtonManagementApp() {
                     searchQuery={searchQuery}
                     onSearchChange={(value) => {
                         setSearchQuery(value);
-                        setCurrentPage(1); // Reset to first page when searching
+                        setCurrentPage(1);
                     }}
                 />;
         }
     };
 
     return (
-        <div className=" min-h-screen font-sans p-4 sm:p-6 lg:p-8">
+        <div className="min-h-screen font-sans p-4 sm:p-6 lg:p-8">
+            <Toaster />
             <div className="container mx-auto">
                 <header className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-800">Button Management</h1>
