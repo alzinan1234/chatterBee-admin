@@ -2,7 +2,7 @@ import StatCard from "@/components/MetricCard";
 import RegistrationTable from "@/components/RegistrationTable";
 import ChartCard from "@/components/EarningSummaryChart";
 import { Area, ResponsiveContainer } from "recharts";
-import AlcoholConsumptionTrendChart from "@/components/AlcoholConsumptionTrendChart";
+
 import EarningSummaryChart from "@/components/EarningSummaryChart";
 import MetricCard from "@/components/MetricCard";
 import { AlertTriangle, DollarSign, Users } from "lucide-react";
