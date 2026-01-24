@@ -350,6 +350,7 @@ export default function ButtonManagementApp() {
     };
 
     const handleDeleteButton = (id, name) => {
+       
         toast((t) => (
             <div className='flex flex-col'>
                 <span className='text-sm font-semibold text-gray-800'>Are you sure you want to delete <strong className='text-red-600'>"{name}"</strong>?</span>

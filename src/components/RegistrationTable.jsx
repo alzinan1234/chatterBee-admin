@@ -161,7 +161,7 @@ export default function UserList() {
             ) : (
               <tr>
                 <td colSpan="5" className="text-center py-8 text-gray-500">
-                  No users found.
+                  No users found..
                 </td>
               </tr>
             )}
