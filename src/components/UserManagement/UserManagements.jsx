@@ -1,29 +1,130 @@
 'use client';
 
-
 import { useRouter } from 'next/navigation';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { getAllUsers, blockUser, deleteUser, transformUsersForDisplay, unblockUser } from '../lib/userManagementApiClient';
 
-// Mock user data expanded to better showcase pagination
-const initialUsers = new Array(44).fill(null).map((_, i) => {
-    const statuses = ['Active', 'Inactive', 'Blocked'];
-    return {
-        id: `user-${i + 1}`,
-        name: ["John Doe", "Alex Carter", "Mia Johnson", "Liam Evans", "Zoe Carter"][i % 5],
-        avatar: `https://i.pravatar.cc/40?u=user${i + 1}`,
-        role: i % 2 === 0 ? 'ChatterBee User' : 'Caregiver',
-        email: `hello${i+1}@example.com`,
-        status: statuses[i % 3],
+// Toast Component
+const Toast = ({ message, type, onClose }) => {
+    useEffect(() => {
+        const timer = setTimeout(onClose, 3000);
+        return () => clearTimeout(timer);
+    }, [onClose]);
+
+    const bgColor = {
+        success: 'bg-green-50 border-green-200 text-green-700',
+        error: 'bg-red-50 border-red-200 text-red-700',
+        info: 'bg-blue-50 border-blue-200 text-blue-700',
     };
-});
 
+    const iconColor = {
+        success: 'text-green-600',
+        error: 'text-red-600',
+        info: 'text-blue-600',
+    };
+
+    const icons = {
+        success: (
+            <svg className={`w-5 h-5 ${iconColor.success}`} fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+        ),
+        error: (
+            <svg className={`w-5 h-5 ${iconColor.error}`} fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+        ),
+        info: (
+            <svg className={`w-5 h-5 ${iconColor.info}`} fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+        ),
+    };
+
+    return (
+        <div className={`fixed top-4 right-4 p-4 rounded-lg border shadow-lg flex items-center gap-3 ${bgColor[type]} z-50 animate-slide-in`}>
+            {icons[type]}
+            <p className="font-medium">{message}</p>
+            <style jsx>{`
+                @keyframes slide-in {
+                    from {
+                        transform: translateX(400px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                .animate-slide-in {
+                    animation: slide-in 0.3s ease-out;
+                }
+            `}</style>
+        </div>
+    );
+};
 
 // UserList Component (main component)
 const UserList = () => {
-    const [users, setUsers] = useState(initialUsers);
+    const [users, setUsers] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
-    const itemsPerPage = 10; // Number of items per page
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [actionLoading, setActionLoading] = useState(null);
+    const [toast, setToast] = useState(null);
+    const itemsPerPage = 10;
+    
+    const router = useRouter();
+
+    // Show toast message
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+    };
+
+    // Fetch users on mount
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                setIsLoading(true);
+                setError(null);
+                const response = await getAllUsers();
+                
+                if (response && response.data) {
+                    let usersData = response.data;
+                    
+                    // Handle different response formats
+                    if (Array.isArray(response.data)) {
+                        usersData = response.data;
+                    } else if (response.data.results) {
+                        usersData = response.data.results;
+                    } else if (response.data.users) {
+                        usersData = response.data.users;
+                    }
+                    
+                    if (Array.isArray(usersData) && usersData.length > 0) {
+                        const transformed = transformUsersForDisplay(usersData);
+                        setUsers(transformed);
+                        setError(null);
+                    } else {
+                        setError("No users found");
+                        setUsers([]);
+                    }
+                } else {
+                    setError("Invalid response format");
+                    setUsers([]);
+                }
+            } catch (err) {
+                console.error("Failed to fetch users:", err);
+                setError(err.message || "Failed to load users");
+                setUsers([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchUsers();
+    }, []);
     
     // Filter users based on search query
     const filteredUsers = useMemo(() => {
@@ -46,25 +147,108 @@ const UserList = () => {
 
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
-
-    const router = useRouter();
-
     // --- Action Handlers ---
     const handleView = (userId) => {
-        console.log(`Navigating to view details for user: ${userId}`);
-        // In a real Next.js app, you would use the router to navigate
-       router.push(`/admin/user-management/${userId}`);
+        router.push(`/admin/user-management/${userId}`);
     };
 
-    const handleBlock = (userId) => {
-        console.log(`Block action for user: ${userId}`);
-        setUsers(currentUsers =>
-            currentUsers.map(user =>
-                user.id === userId
-                    ? { ...user, status: user.status === 'Blocked' ? 'Active' : 'Blocked' }
-                    : user
-            )
-        );
+    const handleBlock = async (userId, userEmail, currentStatus) => {
+        setActionLoading(userId);
+        try {
+            if (currentStatus === 'Blocked') {
+                await unblockUser(userEmail);
+                setUsers(currentUsers =>
+                    currentUsers.map(user =>
+                        user.id === userId
+                            ? { ...user, status: 'Active', is_blocked: false }
+                            : user
+                    )
+                );
+                showToast('User unblocked successfully', 'success');
+            } else {
+                await blockUser(userEmail);
+                setUsers(currentUsers =>
+                    currentUsers.map(user =>
+                        user.id === userId
+                            ? { ...user, status: 'Blocked', is_blocked: true }
+                            : user
+                    )
+                );
+                showToast('User blocked successfully', 'success');
+            }
+            setError(null);
+        } catch (err) {
+            console.error("Block/Unblock error:", err);
+            
+            let errorMsg = 'Failed to update user status';
+            
+            // Handle validation errors with field-specific messages
+            if (err.response?.data?.errors) {
+                const errors = err.response.data.errors;
+                const errorMessages = [];
+                
+                Object.keys(errors).forEach(field => {
+                    if (Array.isArray(errors[field])) {
+                        errorMessages.push(errors[field][0]);
+                    } else {
+                        errorMessages.push(errors[field]);
+                    }
+                });
+                
+                errorMsg = errorMessages.join(' • ');
+            } else if (err.response?.data?.message) {
+                errorMsg = err.response.data.message;
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+            
+            showToast(errorMsg, 'error');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleDelete = async (userId, userEmail) => {
+        if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+            return;
+        }
+        
+        setActionLoading(userId);
+        try {
+            await deleteUser(userEmail);
+            setUsers(currentUsers =>
+                currentUsers.filter(user => user.id !== userId)
+            );
+            showToast('User deleted successfully', 'success');
+        } catch (err) {
+            console.error("Delete error:", err);
+            
+            let errorMsg = 'Failed to delete user';
+            
+            // Handle validation errors with field-specific messages
+            if (err.response?.data?.errors) {
+                const errors = err.response.data.errors;
+                const errorMessages = [];
+                
+                Object.keys(errors).forEach(field => {
+                    if (Array.isArray(errors[field])) {
+                        errorMessages.push(errors[field][0]);
+                    } else {
+                        errorMessages.push(errors[field]);
+                    }
+                });
+                
+                errorMsg = errorMessages.join(' | ');
+            } else if (err.response?.data?.message) {
+                errorMsg = err.response.data.message;
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+            
+            showToast(errorMsg, 'error');
+        } finally {
+            setActionLoading(null);
+        }
     };
 
     // --- Pagination Logic ---
@@ -76,7 +260,7 @@ const UserList = () => {
 
     const renderPageNumbers = () => {
         const pageNumbers = [];
-        const maxPagesToShow = 5; // To control how many page numbers are visible
+        const maxPagesToShow = 5;
         
         if (totalPages <= maxPagesToShow) {
             for (let i = 1; i <= totalPages; i++) {
@@ -108,7 +292,6 @@ const UserList = () => {
             pageNumbers.push(totalPages);
         }
 
-        // Remove duplicate ellipsis
         const uniquePageNumbers = pageNumbers.filter((item, index) => {
             return item !== '...' || pageNumbers[index-1] !== '...';
         });
@@ -146,14 +329,47 @@ const UserList = () => {
         );
     };
 
-    return (
-        <div style={{ boxShadow: '0px 4px 14.7px 0px rgba(0, 0, 0, 0.25)' }} className=" rounded-lg min-h-screen p-4 sm:p-8">
-            <div className="  mx-auto">
-                {/* <header className="mb-8">
-                    <h1 className="text-2xl font-bold text-gray-800">All User</h1>
-                </header> */}
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-screen bg-gray-50">
+                <div className="text-center">
+                    <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4 mx-auto"></div>
+                    <p className="text-gray-600">Loading users...</p>
+                    <style jsx>{`
+                        .loader {
+                            border-top-color: #FFD4A0;
+                            animation: spinner 1.5s linear infinite;
+                        }
+                        @keyframes spinner {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    `}</style>
+                </div>
+            </div>
+        );
+    }
 
-                <div className="  ">
+    return (
+        <div style={{ boxShadow: '0px 4px 14.7px 0px rgba(0, 0, 0, 0.25)' }} className="rounded-lg min-h-screen p-4 sm:p-8 bg-white">
+            {/* Toast Notification */}
+            {toast && (
+                <Toast 
+                    message={toast.message} 
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
+
+            <div>
+                {error && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                        <p className="font-semibold">Error:</p>
+                        <p>{error}</p>
+                    </div>
+                )}
+
+                <div>
                     <div className="p-6 border-b border-gray-200 flex justify-between items-center">
                         <h2 className="text-2xl font-semibold text-gray-700">User List</h2>
                         <div className="relative">
@@ -164,7 +380,7 @@ const UserList = () => {
                                     value={searchQuery}
                                     onChange={(e) => {
                                         setSearchQuery(e.target.value);
-                                        setCurrentPage(1); // Reset to first page when searching
+                                        setCurrentPage(1);
                                     }}
                                     className="outline-none w-64 text-sm text-gray-700 placeholder-gray-500"
                                 />
@@ -207,27 +423,33 @@ const UserList = () => {
                                                         src={user.avatar}
                                                         alt={`${user.name}'s avatar`}
                                                         className="w-10 h-10 rounded-full object-cover"
-                                                        onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/40x40/EFEFEF/333?text=??'; }}
+                                                        onError={(e) => { e.target.onerror = null; e.target.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name); }}
                                                     />
                                                     <span className="font-medium text-gray-800">{user.name}</span>
                                                 </div>
                                             </td>
                                             <td className="py-4 px-4 text-gray-600">{user.role}</td>
-                                            <td className="py-4 px-4 text-gray-600">{user.email}</td>
+                                            <td className="py-4 px-4 text-gray-600 text-xs">{user.email}</td>
                                             <td className="py-4 px-4">
                                                 <StatusBadge status={user.status} />
                                             </td>
                                             <td className="py-4 px-4">
                                                 <div className="flex items-center gap-2">
                                                     <button
-                                                        onClick={() => handleBlock(user.id)}
-                                                        className="px-4 py-2 text-sm font-medium rounded-md bg-[#FFF8E6] text-[#D4A12F] hover:bg-opacity-80 transition-colors"
+                                                        onClick={() => handleBlock(user.id, user.email, user.status)}
+                                                        disabled={actionLoading === user.id}
+                                                        className="px-4 py-2 text-sm font-medium rounded-md bg-[#FFF8E6] text-[#D4A12F] hover:bg-opacity-80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                     >
-                                                        Block
+                                                        {actionLoading === user.id ? (
+                                                            <span className="flex items-center gap-1">
+                                                                <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                                                                Processing...
+                                                            </span>
+                                                        ) : user.status === 'Blocked' ? 'Unblock' : 'Block'}
                                                     </button>
                                                     <button
                                                         onClick={() => handleView(user.id)}
-                                                        className=" cursor-pointer px-4 py-2 text-sm font-medium rounded-md bg-[#EBF5FF] text-[#3B82F6] hover:bg-opacity-80 transition-colors"
+                                                        className="cursor-pointer px-4 py-2 text-sm font-medium rounded-md bg-[#EBF5FF] text-[#3B82F6] hover:bg-opacity-80 transition-colors"
                                                     >
                                                         View
                                                     </button>
@@ -238,7 +460,7 @@ const UserList = () => {
                                 ) : (
                                     <tr>
                                         <td colSpan="5" className="text-center py-8 text-gray-500">
-                                            No users found.
+                                            {users.length === 0 ? 'No users found.' : 'No results match your search.'}
                                         </td>
                                     </tr>
                                 )}
@@ -247,25 +469,27 @@ const UserList = () => {
                     </div>
                     
                     {/* Pagination */}
-                    <div className="p-4 flex justify-end items-center gap-2">
-                         <button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
-                        </button>
-                        
-                        {renderPageNumbers()}
+                    {totalPages > 1 && (
+                        <div className="p-4 flex justify-end items-center gap-2">
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                            </button>
+                            
+                            {renderPageNumbers()}
 
-                        <button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                            className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
-                        </button>
-                    </div>
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -273,5 +497,3 @@ const UserList = () => {
 };
 
 export default UserList;
-
-

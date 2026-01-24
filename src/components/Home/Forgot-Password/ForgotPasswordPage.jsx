@@ -1,8 +1,10 @@
 "use client";
+import { resetPassword, sendOTP, verifyOTP } from "@/components/lib/apiClient";
 import React, { useState, useEffect, useRef } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
-// SVG Icons
+
+// SVG Icons (unchanged)
 const MailIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -63,7 +65,7 @@ const EyeIcon = ({ show }) => (
   </svg>
 );
 
-// Forgot Password Flow Components
+// Step 1: Email Entry Component
 const ForgotPasswordInitial = ({ onSendCode, loading }) => {
   const [email, setEmail] = useState("");
 
@@ -130,26 +132,25 @@ const ForgotPasswordInitial = ({ onSendCode, loading }) => {
   );
 };
 
+// Step 2: OTP Verification Component (4 digits)
 const OTPVerification = ({ email, onVerify, onResend, loading, countdown }) => {
-  const [otp, setOtp] = useState(["", "", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", ""]);
   const inputsRef = useRef([]);
 
   const handleChange = (value, index) => {
-    if (!/^\d*$/.test(value)) return; // Only allow numbers
+    if (!/^\d*$/.test(value)) return;
     
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
     
-    // Auto-focus to next input
-    if (value && index < 4) {
+    if (value && index < 3) {
       inputsRef.current[index + 1].focus();
     }
   };
 
   const handleKeyDown = (e, index) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
-      // Move to previous input on backspace
       inputsRef.current[index - 1].focus();
     }
   };
@@ -157,20 +158,18 @@ const OTPVerification = ({ email, onVerify, onResend, loading, countdown }) => {
   const handlePaste = (e) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData("text");
-    if (/^\d{5}$/.test(pastedData)) {
-      const newOtp = pastedData.split("").slice(0, 5);
+    if (/^\d{4}$/.test(pastedData)) {
+      const newOtp = pastedData.split("").slice(0, 4);
       setOtp(newOtp);
-      
-      // Focus on the last input after paste
-      inputsRef.current[4].focus();
+      inputsRef.current[3].focus();
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const code = otp.join("");
-    if (code.length !== 5) {
-      toast.error("Please enter the complete 5-digit code.");
+    if (code.length !== 4) {
+      toast.error("Please enter the complete 4-digit code.");
       return;
     }
     
@@ -184,7 +183,7 @@ const OTPVerification = ({ email, onVerify, onResend, loading, countdown }) => {
           Verification Code
         </h1>
         <p className="text-zinc-800 text-base font-medium font-['Nunito'] leading-snug mt-2">
-          Enter the verification code that we have sent to your email.
+          Enter the 4-digit code sent to your email.
         </p>
       </div>
 
@@ -214,14 +213,14 @@ const OTPVerification = ({ email, onVerify, onResend, loading, countdown }) => {
         <div className="text-center">
           <p className="text-slate-500 text-sm font-normal font-['Nunito']">
             {countdown > 0 ? (
-              <>Click to retrieve the code! Please! code at 0:{countdown.toString().padStart(2, '0')}</>
+              <>Resend code in 0:{countdown.toString().padStart(2, '0')}</>
             ) : (
               <button
                 type="button"
                 onClick={onResend}
                 className="text-[#FBBF24] font-medium hover:underline"
               >
-                Click to retrieve the code! Please!
+                Click to resend the code
               </button>
             )}
           </p>
@@ -239,7 +238,8 @@ const OTPVerification = ({ email, onVerify, onResend, loading, countdown }) => {
   );
 };
 
-const SetNewPassword = ({ onReset, loading }) => {
+// Step 3: Set New Password Component
+const SetNewPassword = ({ email, otp, onReset, loading }) => {
   const [password, setPassword] = useState("••••••••");
   const [confirmPassword, setConfirmPassword] = useState("••••••••");
   const [showPassword, setShowPassword] = useState(false);
@@ -273,7 +273,7 @@ const SetNewPassword = ({ onReset, loading }) => {
       return;
     }
     
-    onReset(password);
+    onReset(password, confirmPassword);
   };
 
   return (
@@ -358,13 +358,14 @@ const SetNewPassword = ({ onReset, loading }) => {
   );
 };
 
+// Main Forgot Password Page
 export default function ForgotPasswordPage() {
-  const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
+  const [verifiedOtp, setVerifiedOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
-  // Countdown timer effect
   useEffect(() => {
     let timer;
     if (countdown > 0) {
@@ -373,62 +374,91 @@ export default function ForgotPasswordPage() {
     return () => clearTimeout(timer);
   }, [countdown]);
 
-  const handleSendCode = (userEmail) => {
+  const handleSendCode = async (userEmail) => {
     setLoading(true);
     setEmail(userEmail);
     
-    // Simulate API call to send OTP
-    setTimeout(() => {
-      toast.success("Verification code sent to your email!");
-      setStep(2);
-      setCountdown(30); // 30-second countdown
+    try {
+      const response = await sendOTP(userEmail);
+      
+      if (response.success) {
+        toast.success("Verification code sent to your email!");
+        setStep(2);
+        setCountdown(30);
+      } else {
+        toast.error(response.message || "Failed to send verification code.");
+      }
+    } catch (err) {
+      console.error("Send OTP error:", err);
+      toast.error(err.message || "Failed to send verification code.");
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
-  const handleVerifyCode = (code) => {
+  const handleVerifyCode = async (code) => {
     setLoading(true);
     
-    // Simulate API call to verify OTP
-    setTimeout(() => {
-      // For demo purposes, any 5-digit code starting with 1 is valid
-      if (code.startsWith("1")) {
+    try {
+      const response = await verifyOTP(email, code);
+      
+      if (response.success) {
         toast.success("Code verified successfully!");
+        setVerifiedOtp(code);
         setStep(3);
       } else {
-        toast.error("Invalid verification code. Please try again.");
+        toast.error(response.message || "Invalid verification code.");
       }
+    } catch (err) {
+      console.error("Verify OTP error:", err);
+      toast.error(err.message || "Invalid verification code.");
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
-  const handleResendCode = () => {
+  const handleResendCode = async () => {
     if (countdown > 0) return;
     
     setLoading(true);
     
-    // Simulate API call to resend OTP
-    setTimeout(() => {
-      toast.success("New verification code sent!");
-      setCountdown(30); // Reset 30-second countdown
+    try {
+      const response = await sendOTP(email);
+      
+      if (response.success) {
+        toast.success("New verification code sent!");
+        setCountdown(30);
+      } else {
+        toast.error(response.message || "Failed to resend code.");
+      }
+    } catch (err) {
+      console.error("Resend OTP error:", err);
+      toast.error(err.message || "Failed to resend code.");
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
-  const handleResetPassword = (newPassword) => {
+  const handleResetPassword = async (newPassword, confirmPassword) => {
     setLoading(true);
     
-    // Simulate API call to reset password
-    setTimeout(() => {
-      toast.success("Password reset successfully!");
+    try {
+      const response = await resetPassword(email, verifiedOtp, newPassword, confirmPassword);
       
-      // Redirect to login page after successful reset
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1000);
-      
+      if (response.success) {
+        toast.success("Password reset successfully!");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1000);
+      } else {
+        toast.error(response.message || "Failed to reset password.");
+      }
+    } catch (err) {
+      console.error("Reset password error:", err);
+      toast.error(err.message || "Failed to reset password.");
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -463,6 +493,8 @@ export default function ForgotPasswordPage() {
             
             {step === 3 && (
               <SetNewPassword 
+                email={email}
+                otp={verifiedOtp}
                 onReset={handleResetPassword}
                 loading={loading}
               />
@@ -496,4 +528,3 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
-

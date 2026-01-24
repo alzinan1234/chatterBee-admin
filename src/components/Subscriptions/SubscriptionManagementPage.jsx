@@ -1,218 +1,192 @@
 "use client";
-import React, { useState } from 'react';
-
-// --- ICONS (as React components for easy use) ---
-const PlusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>;
-const EditIcon = ({ className = "h-5 w-5" }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" /></svg>;
-const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>;
-const ChevronDownIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>;
-const TrashIcon = ({ className = "h-5 w-5" }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
+import React, { useState, useEffect } from 'react';
+import getAllSubscriptions, { transformSubscriptionsForDisplay } from '../lib/subscriptionApiClient';
 
 
-// --- MOCK DATA (Simulates fetching data from a database) ---
-const initialPlans = [
-    {
-        id: 1,
-        name: 'Free Plan',
-        price: 0.00,
-        category: 'Monthly',
-        features: [
-            'Limited features',
-            '1 Caregiver seat',
-            'No customizations',
-            'No notifications',
-        ],
-        isActive: false,
-    },
-    {
-        id: 2,
-        name: 'Unlock ChatterBee Pro',
-        price: 2.99,
-        category: 'Monthly',
-        features: [
-            'Full features',
-            '2 Caregiver seats',
-            'Push notifications',
-            'Customization options',
-            'Add-ons: Extra caregiver seats & Multiple profiles',
-        ],
-        isActive: true,
-    },
-];
+// --- ICONS ---
+const LoadingIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 animate-spin text-yellow-400" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
 
-// --- REUSABLE FORM COMPONENT (For Creating and Editing) ---
-const PlanForm = ({ onSave, onCancel, initialData }) => {
-    const isEditMode = !!initialData;
-    const [plan, setPlan] = useState({
-        name: initialData?.name || '',
-        price: initialData?.price || '',
-        category: initialData?.category || 'Monthly',
-        features: initialData?.features?.join('\n') || '',
-    });
+const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>;
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setPlan(prev => ({ ...prev, [name]: value }));
-    };
+const AlertIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>;
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (!plan.name || plan.price === '' || !plan.category || !plan.features) {
-            alert('Please fill out all fields.');
-            return;
-        }
-        onSave({
-            ...plan,
-            price: parseFloat(plan.price),
-            features: plan.features.split('\n').filter(f => f.trim() !== ''),
-        });
-    };
+// --- SUBSCRIPTION TABLE COMPONENT ---
+const SubscriptionTable = ({ subscriptions, isLoading, error }) => {
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-96">
+                <div className="text-center">
+                    <LoadingIcon />
+                    <p className="mt-4 text-gray-600">Loading subscriptions...</p>
+                </div>
+            </div>
+        );
+    }
 
-    return (
-        <div className="bg-white p-8 rounded-xl shadow-lg max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-800 mb-8">{isEditMode ? 'Edit Plan' : 'Create New Plan'}</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    if (error) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                <div className="flex items-center gap-3">
+                    <AlertIcon />
                     <div>
-                        <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">Package Categories *</label>
-                        <div className="relative">
-                            <select id="category" name="category" value={plan.category} onChange={handleInputChange} className="w-full appearance-none bg-white border border-gray-300 rounded-lg py-2.5 px-4 text-gray-700 leading-tight focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400">
-                                <option>Monthly</option>
-                                <option>Yearly</option>
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700"><ChevronDownIcon /></div>
-                        </div>
-                    </div>
-                    <div>
-                        <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">Package Price *</label>
-                        <input type="number" id="price" name="price" value={plan.price} onChange={handleInputChange} step="0.01" placeholder="$2.99" className="w-full bg-white border border-gray-300 rounded-lg py-2.5 px-4 text-gray-700 leading-tight focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400" />
-                    </div>
-                    <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Plan Name *</label>
-                        <input type="text" id="name" name="name" value={plan.name} onChange={handleInputChange} placeholder="Premium" className="w-full bg-white border border-gray-300 rounded-lg py-2.5 px-4 text-gray-700 leading-tight focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400" />
-                    </div>
-                    <div className="md:col-span-2">
-                        <label htmlFor="features" className="block text-sm font-medium text-gray-700 mb-2">Package Features *</label>
-                        <textarea id="features" name="features" value={plan.features} onChange={handleInputChange} rows="5" placeholder="Enter each feature on a new line..." className="w-full bg-white border border-gray-300 rounded-lg py-2.5 px-4 text-gray-700 leading-tight focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400" />
+                        <p className="text-red-700 font-semibold">Error loading subscriptions</p>
+                        <p className="text-red-600 text-sm mt-1">{error}</p>
                     </div>
                 </div>
-                <div className="flex items-center justify-start gap-4 pt-4">
-                    <button type="button" onClick={onCancel} className="px-6 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition">Cancel</button>
-                    <button type="submit" className="px-6 py-2 bg-yellow-400 text-gray-800 rounded-lg text-sm font-semibold hover:bg-yellow-500 transition">{isEditMode ? 'Submit' : 'Save'}</button>
-                </div>
-            </form>
-        </div>
-    );
-};
+            </div>
+        );
+    }
 
-// --- LIST COMPONENT (To display plan cards) ---
-const PlanList = ({ plans, onEdit, onDelete, onSelect }) => {
+    if (!subscriptions || subscriptions.length === 0) {
+        return (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                <p className="text-yellow-700 font-semibold">No subscriptions found</p>
+                <p className="text-yellow-600 text-sm mt-2">No subscription data available at the moment.</p>
+            </div>
+        );
+    }
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {plans.map(plan => (
-                <div key={plan.id} onClick={() => onSelect(plan.id)} className={`bg-white p-6 rounded-2xl shadow-sm border-2 transition-all cursor-pointer hover:shadow-md ${plan.isActive ? 'border-yellow-400' : 'border-transparent hover:border-gray-200'}`}>
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-3">
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${plan.isActive ? 'border-yellow-400' : 'border-gray-300'}`}>
-                                {plan.isActive && <div className="w-2.5 h-2.5 bg-yellow-400 rounded-full"></div>}
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-gray-800">{plan.name}</h3>
-                                <p className="text-sm text-gray-500">
-                                    ${plan.price.toFixed(2)}
-                                    {plan.price > 0 && `/${plan.category === 'Monthly' ? 'month' : 'year'}`}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <button onClick={(e) => { e.stopPropagation(); onEdit(plan); }} className="text-gray-400 hover:text-yellow-500 p-1"><EditIcon /></button>
-                            <button onClick={(e) => { e.stopPropagation(); onDelete(plan.id); }} className="text-gray-400 hover:text-red-500 p-1"><TrashIcon /></button>
-                        </div>
-                    </div>
-                    <ul className="space-y-3">
-                        {plan.features.map((feature, index) => (
-                            <li key={index} className="flex items-center gap-3">
-                                <CheckIcon />
-                                <span className="text-sm text-gray-600">{feature}</span>
-                            </li>
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">User</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Plan</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Price</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Type</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Period</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Payment</th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {subscriptions.map((sub) => (
+                            <tr key={sub.id} className="hover:bg-gray-50 transition">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm font-medium text-gray-900">{sub.fullName}</div>
+                                    <div className="text-xs text-gray-500">{sub.userEmail}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-gray-900">{sub.planName}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm font-semibold text-gray-900">${parseFloat(sub.price || 0).toFixed(2)}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                                        {sub.planType || 'N/A'}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center gap-2">
+                                        {sub.status === 'active' ? (
+                                            <>
+                                                <CheckIcon />
+                                                <span className="text-sm font-medium text-green-700">Active</span>
+                                            </>
+                                        ) : (
+                                            <span className="text-sm font-medium text-gray-600">{sub.status}</span>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 text-xs text-gray-600">
+                                    <div>Start: {new Date(sub.currentPeriodStart).toLocaleDateString()}</div>
+                                    <div>End: {new Date(sub.currentPeriodEnd).toLocaleDateString()}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`px-2 py-1 text-xs font-medium rounded ${sub.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                        {sub.paymentStatus}
+                                    </span>
+                                </td>
+                            </tr>
                         ))}
-                    </ul>
-                </div>
-            ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };
 
-// --- MAIN PAGE COMPONENT ---
-export default function SubscriptionManagementPage() {
-    // --- STATE MANAGEMENT ---
-    const [plans, setPlans] = useState(initialPlans);
-    const [view, setView] = useState('list'); // 'list', 'create', 'edit'
-    const [editingPlan, setEditingPlan] = useState(null);
-
-    // --- CRUD HANDLERS ---
-    const handleCreateNewClick = () => {
-        setEditingPlan(null);
-        setView('create');
-    };
-
-    const handleEditClick = (plan) => {
-        setEditingPlan(plan);
-        setView('edit');
-    };
-
-    const handleCancel = () => {
-        setEditingPlan(null);
-        setView('list');
-    };
-
-    const handleSavePlan = (planData) => {
-        if (editingPlan) {
-            setPlans(plans.map(p => p.id === editingPlan.id ? { ...p, ...planData } : p));
-        } else {
-            const newPlan = { id: Date.now(), ...planData, isActive: false };
-            setPlans([...plans, newPlan]);
-        }
-        setView('list');
-    };
-
-    const handleDeletePlan = (planId) => {
-        if (window.confirm('Are you sure you want to delete this plan? This action cannot be undone.')) {
-            setPlans(plans.filter(p => p.id !== planId));
-        }
-    };
-
-    const handleSelectPlan = (planId) => {
-        setPlans(plans.map(p => ({
-            ...p,
-            isActive: p.id === planId,
-        })));
-    };
-    
-    // --- RENDER LOGIC ---
-    const renderContent = () => {
-        switch (view) {
-            case 'create':
-                return <PlanForm onSave={handleSavePlan} onCancel={handleCancel} />;
-            case 'edit':
-                return <PlanForm onSave={handleSavePlan} onCancel={handleCancel} initialData={editingPlan} />;
-            default:
-                return <PlanList plans={plans} onEdit={handleEditClick} onDelete={handleDeletePlan} onSelect={handleSelectPlan} />;
-        }
-    };
+// --- STATS COMPONENT ---
+const SubscriptionStats = ({ subscriptions }) => {
+    const totalSubscriptions = subscriptions.length;
+    const activeSubscriptions = subscriptions.filter(s => s.status === 'active').length;
+    const totalRevenue = subscriptions.reduce((sum, s) => sum + parseFloat(s.price || 0), 0);
+    const paidSubscriptions = subscriptions.filter(s => s.paymentStatus === 'paid').length;
 
     return (
-        <div className="bg-gray-50 min-h-screen font-sans p-4 sm:p-6 lg:p-8">
-            <div className="container mx-auto">
-                <header className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-800">Subscription Management</h1>
-                    {view === 'list' && (
-                        <button onClick={handleCreateNewClick} className="flex items-center justify-center bg-yellow-400 text-gray-800 font-semibold py-2 px-5 rounded-lg shadow-md hover:bg-yellow-500 transition-all duration-300">
-                            <PlusIcon /> Create New Plan
-                        </button>
-                    )}
-                </header>
-                <main>{renderContent()}</main>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white p-6 rounded-lg shadow">
+                <p className="text-gray-600 text-sm font-medium">Total Subscriptions</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{totalSubscriptions}</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow">
+                <p className="text-gray-600 text-sm font-medium">Active Subscriptions</p>
+                <p className="text-3xl font-bold text-green-600 mt-2">{activeSubscriptions}</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow">
+                <p className="text-gray-600 text-sm font-medium">Total Revenue</p>
+                <p className="text-3xl font-bold text-blue-600 mt-2">${totalRevenue.toFixed(2)}</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow">
+                <p className="text-gray-600 text-sm font-medium">Paid Subscriptions</p>
+                <p className="text-3xl font-bold text-purple-600 mt-2">{paidSubscriptions}</p>
+            </div>
+        </div>
+    );
+};
+
+// --- MAIN COMPONENT ---
+export default function SubscriptionManagementPage() {
+    const [subscriptions, setSubscriptions] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Fetch subscriptions on mount
+    useEffect(() => {
+        const fetchSubscriptions = async () => {
+            try {
+                setIsLoading(true);
+                setError(null);
+                const response = await getAllSubscriptions();
+
+                if (response && response.data && response.data.subscriptions) {
+                    const transformed = transformSubscriptionsForDisplay(response.data.subscriptions);
+                    setSubscriptions(transformed);
+                } else {
+                    setError("Invalid response format from server");
+                }
+            } catch (err) {
+                console.error("Failed to fetch subscriptions:", err);
+                setError(err.message || "Failed to load subscriptions. Please try again later.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchSubscriptions();
+    }, []);
+
+    return (
+        <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900">Subscriptions</h1>
+                    <p className="text-gray-600 mt-2">Manage and monitor all user subscriptions</p>
+                </div>
+
+                {/* Stats */}
+                {!isLoading && !error && <SubscriptionStats subscriptions={subscriptions} />}
+
+                {/* Subscription Table */}
+                <SubscriptionTable
+                    subscriptions={subscriptions}
+                    isLoading={isLoading}
+                    error={error}
+                />
             </div>
         </div>
     );

@@ -1,11 +1,13 @@
-import UserManagements from '@/components/UserManagement/UserManagements'
+
+
+import UserList from '@/components/UserManagement/UserManagements'
 import React from 'react'
 
 const UserManagement = () => {
   return (
     <div>
 
-        <UserManagements/>
+        <UserList/>
     </div>
   )
 }

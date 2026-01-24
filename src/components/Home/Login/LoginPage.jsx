@@ -1,10 +1,12 @@
-"use client"; // This directive is required for client-side functionality
+"use client";
 
+import { loginUser } from "@/components/lib/apiClient";
 import Link from "next/link";
 import React, { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
-// Simple SVG components for icons to avoid extra dependencies
+
+// SVG Icons (unchanged)
 const MailIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -67,7 +69,7 @@ const EyeIcon = ({ show }) => (
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("••••••••");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
@@ -78,7 +80,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    if (!email || !password || password === "••••••••") {
+    if (!email || !password || password === "") {
       setError("Please enter both email and password.");
       toast.error("Please enter both email and password.");
       setLoading(false);
@@ -93,53 +95,42 @@ export default function LoginPage() {
       return;
     }
 
-    // Simulate API Call
-    console.log("Attempting to log in with:", { email, password, rememberMe });
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await loginUser(email, password);
 
-      let success = false;
-      let redirectPath = "/";
-      let token = "";
-
-      // Simulated Admin Login
-      if (email === "admin@example.com" && password === "admin123") {
-        toast.success("Admin Login Successful! (Simulated)");
-        token = "ADMIN_TOKEN_SECRET";
-        redirectPath = "/admin";
-        success = true;
+      if (response.success) {
+        toast.success("Login Successful!");
+        
+        // Set cookie expiry based on Remember Me
+        if (rememberMe) {
+          const token = response.data?.access;
+          const date = new Date();
+          date.setTime(date.getTime() + 30 * 24 * 60 * 60 * 1000);
+          const expires = "expires=" + date.toUTCString();
+          document.cookie = `token=${token};${expires};path=/;SameSite=Lax`;
+        }
+        
+        // Redirect based on user role if available
+        const redirectPath = response.data?.is_admin ? "/admin" : "/admin";
+        setTimeout(() => {
+          window.location.href = redirectPath;
+        }, 500);
+      } else {
+        setError(response.message || "Login failed. Please try again.");
+        toast.error(response.message || "Login failed. Please try again.");
       }
-      // Simulated Regular User Login
-      else if (email === "user@example.com" && password === "password123") {
-        toast.success("User Login Successful! (Simulated)");
-        token = "USER_TOKEN_SECRET";
-        redirectPath = "/dashboard";
-        success = true;
-      }
-      // Simulated Failed Login
-      else {
-        setError("Invalid email or password. (Simulated)");
-        toast.error("Invalid email or password. (Simulated)");
-      }
-
-      if (success) {
-        document.cookie = `token=${token}; path=/; max-age=${
-          rememberMe ? 60 * 60 * 24 * 30 : 60 * 30
-        }; SameSite=Lax`;
-        window.location.href = redirectPath;
-      }
-    } catch (err) { 
+    } catch (err) {
       console.error("Login error:", err);
-      setError("An unexpected error occurred. Please try again.");
-      toast.error("An unexpected error occurred. Please try again.");
+      const errorMessage = err.message || "An unexpected error occurred. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   const togglePasswordVisibility = () => {
-    if (password === "••••••••") {
+    if (password === "") {
       setPassword("");
     }
     setShowPassword(!showPassword);
@@ -157,8 +148,7 @@ export default function LoginPage() {
         </header>
 
         <main className="w-full flex justify-center">
-          <div className="w-full max-w-md flex flex-col  gap-8"> 
-            {/* --- Login Form Header --- */}
+          <div className="w-full max-w-md flex flex-col gap-8"> 
             <div className="flex justify-center sm:justify-start "></div>
             <div className="self-stretch text-left sm:text-start">
               <h1 className="text-zinc-800 text-3xl font-semibold font-['Nunito'] leading-10">
@@ -169,12 +159,10 @@ export default function LoginPage() {
               </p>
             </div>
 
-            {/* --- Form --- */}
             <form
               onSubmit={handleSubmit}
               className="w-full flex flex-col gap-5"
             >
-              {/* --- Email Input --- */}
               <div>
                 <label
                   htmlFor="email"
@@ -198,7 +186,6 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* --- Password Input --- */}
               <div>
                 <label
                   htmlFor="password"
@@ -228,7 +215,6 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* --- Remember Me & Forgot Password --- */}
               <div className="flex justify-between items-center">
                 <label
                   htmlFor="rememberMe"
@@ -266,14 +252,12 @@ export default function LoginPage() {
                 </Link>
               </div>
 
-              {/* --- Error Message --- */}
               {error && (
                 <p className="text-red-500 text-sm text-center font-['Nunito']">
                   {error}
                 </p>
               )}
 
-              {/* --- Submit Button --- */}
               <button
                 type="submit"
                 disabled={loading}
