@@ -59,6 +59,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         }
         if (currentPage <= 4) {
             return [1, 2, 3, 4, 5, '...', totalPages];
+        
         }
         if (currentPage > totalPages - 4) {
             return [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
