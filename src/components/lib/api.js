@@ -3,7 +3,7 @@
 // Purpose: Centralized API Configuration & Endpoints
 // ============================================
 
-const API_BASE_URL = "https://herself-pty-primary-can.trycloudflare.com";
+const API_BASE_URL = "https://musicians-celebs-wing-indicates.trycloudflare.com";
 
 export const API_ENDPOINTS = {
   // ============================================
@@ -117,6 +117,7 @@ export const API_ERROR_MESSAGES = {
   NOT_FOUND: "The requested resource was not found.",
   SERVER_ERROR: "Server error. Please try again later.",
   VALIDATION_ERROR: "Please check your input and try again.",
+
 };
 
 // ============================================

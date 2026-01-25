@@ -6,7 +6,7 @@
 import { API_ENDPOINTS } from "./api";
 
 
-// Helper function to get token from cookie
+// Helper function to get token from cookie  
 const getTokenFromCookie = () => {
   if (typeof document === "undefined") return null;
   const name = "token=";
@@ -148,6 +148,8 @@ export const changePassword = async (oldPassword, newPassword, newPassword2) => 
   });
 };
 
+
+
 /**
  * Verify Email
  */
@@ -180,5 +182,6 @@ export const logoutUser = () => {
 export const getToken = () => {
   return getTokenFromCookie();
 };
+
 
 export default apiCall;

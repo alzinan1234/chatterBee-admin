@@ -73,6 +73,7 @@ const SettingsPage = ({ onBackClick }) => {
   };
 
   // Removed all FAQ-related handler functions:
+
   // handleQuestionChange, handleFaqSelection, handleAddFaq, handleDeleteFaq
 
   return (
