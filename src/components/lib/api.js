@@ -44,6 +44,17 @@ export const API_ENDPOINTS = {
   },
 
   // ============================================
+  // Dashboard Statistics Endpoints
+  // ============================================
+  DASHBOARD: {
+    // Get admin dashboard statistics
+    GET_ADMIN_STATS: `${API_BASE_URL}/api/dashboard/admin/dashboard/stats/`,
+    
+    // Get user statistics
+    GET_USER_STATS: `${API_BASE_URL}/api/dashboard/admin/users/stats/`,
+  },
+
+  // ============================================
   // Subscription Endpoints
   // ============================================
   SUBSCRIPTION: {
@@ -117,7 +128,6 @@ export const API_ERROR_MESSAGES = {
   NOT_FOUND: "The requested resource was not found.",
   SERVER_ERROR: "Server error. Please try again later.",
   VALIDATION_ERROR: "Please check your input and try again.",
-
 };
 
 // ============================================

@@ -34,7 +34,7 @@ export const getAllUsers = async (filters = {}) => {
     throw error;
   }
 };
-
+  
 /**
  * Get user details by ID
  * @param {number} userId - User ID
@@ -73,7 +73,7 @@ export const blockUser = async (email, reason = "") => {
     throw error;
   }
 };
-
+      
 /**
  * Unblock a user
  * @param {string} email - User email
