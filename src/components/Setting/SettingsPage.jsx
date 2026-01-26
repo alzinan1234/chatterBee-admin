@@ -4,7 +4,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'; // Only ArrowLeftIcon is needed
 import dynamic from 'next/dynamic';
-
 // Updated contentData - removed 'faqs'
 const contentData = {
   'privacy-security': {
@@ -33,7 +32,7 @@ const SettingsPage = ({ onBackClick }) => {
   // Removed faqs and selectedFaq states
   // const [faqs, setFaqs] = useState(contentData.faqs.questions || []);
   // const [selectedFaq, setSelectedFaq] = useState(faqs.length > 0 ? faqs[0] : null);
-  const [tabContents, setTabContents] = useState(contentData);
+const [tabContents, setTabContents] = useState(contentData);
 
   useEffect(() => {
     // Simplified useEffect as 'faqs' tab is removed
@@ -71,11 +70,8 @@ const SettingsPage = ({ onBackClick }) => {
       document.body.removeChild(confirmDialog);
     };
   };
-
   // Removed all FAQ-related handler functions:
-
   // handleQuestionChange, handleFaqSelection, handleAddFaq, handleDeleteFaq
-
   return (
     <div className="bg-white rounded-2xl min-h-screen text-black p-6 sm:p-6 lg:p-8 font-inter"> {/* Changed bg to white, text to black */}
       <div className="flex items-center mb-6">

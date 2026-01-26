@@ -21,7 +21,6 @@ export const getAdminDashboardStats = async () => {
   }
 };
 
-
 /**
  * Transform user growth data for chart
  * @param {Array} userGrowthData - Raw user growth data from API
