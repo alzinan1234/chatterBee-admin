@@ -101,6 +101,7 @@ const [tabContents, setTabContents] = useState(contentData);
           ))}
         </div>
       </div>
+    
 
       <div className="bg-gray-50 p-4 rounded-b-lg -mt-px"> {/* Adjusted bg color */}
         {/* Only show content for non-FAQ tabs */}
