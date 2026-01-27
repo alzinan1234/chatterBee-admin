@@ -55,3 +55,4 @@ export const notifications = [
 export const getNotificationById = (id) => {
   return notifications.find(notif => notif.id === id);
 };
+

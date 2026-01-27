@@ -81,6 +81,7 @@ const NotificationPage = ({ onBackClick }) => {
     const statusClasses = notification.isRead
       ? 'text-gray-500' // Read notifications can be slightly faded to a dark gray
       : 'text-black'; // Unread notifications stand out with black text
+      // un reea purpel notificationns background stand out with black text and purpel background in this case there are many code i weite there bust this code is 
 
     return (
       <div className='p-5'>

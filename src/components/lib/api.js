@@ -3,7 +3,7 @@
 // Purpose: Centralized API Configuration & Endpoints
 // ============================================
 
-const API_BASE_URL = "https://via-lows-plaza-promo.trycloudflare.com";
+const API_BASE_URL = "https://granted-accessible-numbers-ddr.trycloudflare.com";
 
 export const API_ENDPOINTS = {
   // ============================================
