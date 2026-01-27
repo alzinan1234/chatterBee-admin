@@ -5,7 +5,6 @@
 
 import { API_ENDPOINTS } from "./api";
 
-
 // Helper function to get token from cookie  
 const getTokenFromCookie = () => {
   if (typeof document === "undefined") return null;
@@ -72,16 +71,19 @@ export const apiCall = async (
     // If unauthorized, remove token and redirect to login
     if (response.status === 401) {
       removeTokenFromCookie();
-    //   window.location.href = "/";
-      return;
+      // Uncomment to redirect to login
+      // window.location.href = "/";
+      throw new Error("Session expired. Please login again.");
     }
+
+    // Parse response
+    const responseData = await response.json();
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || `HTTP ${response.status}`);
+      throw new Error(responseData.message || `HTTP ${response.status}`);
     }
 
-    return await response.json();
+    return responseData;
   } catch (error) {
     console.error("API Error:", error);
     throw error;
@@ -148,8 +150,6 @@ export const changePassword = async (oldPassword, newPassword, newPassword2) => 
   });
 };
 
-
-
 /**
  * Verify Email
  */
@@ -182,6 +182,5 @@ export const logoutUser = () => {
 export const getToken = () => {
   return getTokenFromCookie();
 };
-
 
 export default apiCall;
