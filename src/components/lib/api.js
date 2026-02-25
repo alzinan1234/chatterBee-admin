@@ -3,7 +3,7 @@
 // Purpose: Centralized API Configuration & Endpoints
 // ============================================
 
-const API_BASE_URL = "https://granted-accessible-numbers-ddr.trycloudflare.com";
+const API_BASE_URL = "https://solve-lined-worker-guards.trycloudflare.com";
 
 export const API_ENDPOINTS = {
   // ============================================
@@ -77,6 +77,66 @@ export const API_ENDPOINTS = {
   },
 
   // ============================================
+  // Category Endpoints
+  // ============================================
+  CATEGORIES: {
+    // Get all root categories
+    GET_ALL_ROOT_CATEGORIES: `${API_BASE_URL}/api/dashboard/admin/categories/`,
+
+    // Create root category
+    CREATE_ROOT_CATEGORY: `${API_BASE_URL}/api/dashboard/admin/categories/`,
+
+    // Get single category
+    GET_SINGLE_CATEGORY: (categoryId) => `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/`,
+
+    // Update category
+    UPDATE_CATEGORY: (categoryId) => `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/`,
+
+    // Delete category (soft delete)
+    DELETE_CATEGORY: (categoryId) => `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/`,
+  },
+
+  // ============================================
+  // Sub-Category Endpoints
+  // ============================================
+  SUB_CATEGORIES: {
+    // Get all sub-categories for a root category
+    GET_BY_PARENT: (categoryId) => `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/subcategories/`,
+
+    // Create sub-category under a root category
+    CREATE: (categoryId) => `${API_BASE_URL}/api/dashboard/admin/categories/${categoryId}/subcategories/`,
+
+    // Get single sub-category
+    GET_SINGLE: (subCategoryId) => `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/`,
+
+    // Update sub-category
+    UPDATE: (subCategoryId) => `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/`,
+
+    // Delete sub-category (soft delete)
+    DELETE: (subCategoryId) => `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/`,
+  },
+
+  // ============================================
+  // Category Items / Buttons Endpoints
+  // ============================================
+  CATEGORY_ITEMS: {
+    // Get all items/buttons for a sub-category
+    GET_BY_SUB_CATEGORY: (subCategoryId) => `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/items/`,
+
+    // Create item/button under a sub-category
+    CREATE: (subCategoryId) => `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/items/`,
+
+    // Get single item/button
+    GET_SINGLE: (itemId) => `${API_BASE_URL}/api/dashboard/admin/items/${itemId}/`,
+
+    // Update item/button
+    UPDATE: (itemId) => `${API_BASE_URL}/api/dashboard/admin/items/${itemId}/`,
+
+    // Delete item/button (soft delete)
+    DELETE: (itemId) => `${API_BASE_URL}/api/dashboard/admin/items/${itemId}/`,
+  },
+
+  // ============================================
   // Events Management Endpoints
   // ============================================
   EVENTS: {
@@ -129,6 +189,9 @@ export const API_ERROR_MESSAGES = {
   NOT_FOUND: "The requested resource was not found.",
   SERVER_ERROR: "Server error. Please try again later.",
   VALIDATION_ERROR: "Please check your input and try again.",
+  NO_TOKEN: "No authentication token found. Please login.",
+  FILE_TOO_LARGE: "File size exceeds the limit.",
+  INVALID_FILE_TYPE: "Invalid file type. Please check the supported formats.",
 };
 
 // ============================================

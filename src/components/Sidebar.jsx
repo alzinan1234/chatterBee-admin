@@ -36,13 +36,14 @@ const navItems = [
   // { name: "Earning", href: "/admin/earning", icon: Wallet },
   // { name: "Rider Management", href: "/admin/rider-management", icon: Bike },
   { 
-    name: 'Button & Category', 
+    name: 'All Category', 
     href: '/admin/button-categoary', 
     icon: CirclePower,
     hasDropdown: true,
     dropdownItems: [
       { name: "Category", href: "/admin/button-categoary/category" },
-      { name: "Button", href: "/admin/button-categoary/button" }
+      { name: "Sub Category", href: "/admin/button-categoary/sub-cetegoary" },
+    
     ]
   },
   { name: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },

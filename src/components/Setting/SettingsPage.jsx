@@ -56,20 +56,20 @@ const [tabContents, setTabContents] = useState(contentData);
     showConfirmation(`Content for "${tabContents[activeTab].title}" saved!`);
   };
 
-  const showConfirmation = (message) => {
-    const confirmDialog = document.createElement('div');
-    confirmDialog.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
-    confirmDialog.innerHTML = `
-      <div class="bg-white p-6 rounded-lg shadow-lg text-black"> {/* Changed bg to white, text to black */}
-        <p class="mb-4">${message}</p>
-        <button id="confirmOkBtn" class="bg-cyan-400 hover:bg-cyan-300 text-white py-2 px-4 rounded-[4px] border-b-4 border-cyan-500">OK</button> {/* Adjusted border color for light theme */}
-      </div>
-    `;
-    document.body.appendChild(confirmDialog);
-    document.getElementById('confirmOkBtn').onclick = () => {
-      document.body.removeChild(confirmDialog);
-    };
-  };
+  // const showConfirmation = (message) => {
+  //   const confirmDialog = document.createElement('div');
+  //   confirmDialog.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
+  //   confirmDialog.innerHTML = `
+  //     <div class="bg-white p-6 rounded-lg shadow-lg text-black"> {/* Changed bg to white, text to black */}
+  //       <p class="mb-4">${message}</p>
+  //       <button id="confirmOkBtn" class="bg-cyan-400 hover:bg-cyan-300 text-white py-2 px-4 rounded-[4px] border-b-4 border-cyan-500">OK</button> {/* Adjusted border color for light theme */}
+  //     </div>
+  //   `;
+  //   document.body.appendChild(confirmDialog);
+  //   document.getElementById('confirmOkBtn').onclick = () => {
+  //     document.body.removeChild(confirmDialog);
+  //   };
+  // };
   // Removed all FAQ-related handler functions:
   // handleQuestionChange, handleFaqSelection, handleAddFaq, handleDeleteFaq
   return (
