@@ -67,7 +67,7 @@ export default function Topbar({ onBellClick }) {
     <header className="flex items-center justify-end bg-white p-3.5 border-b border-[#D6D6D6]">
       <div className="flex items-center gap-6">
         {/* Notification Bell with onClick handler */}
-        <div 
+        {/* <div 
           className="relative cursor-pointer flex items-center gap-2 bg-[#B929211A] rounded-[38px] py-[5px] px-[8px]" 
           onClick={onBellClick}
         >
@@ -88,7 +88,7 @@ export default function Topbar({ onBellClick }) {
             />
           </svg>
           <span className="text-[#FFFF] bg-[#B92921] rounded-full px-3 py-1 text-sm">8</span>
-        </div>
+        </div> */}
 
         {/* User Profile Image */}
         <div 

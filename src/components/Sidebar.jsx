@@ -20,6 +20,7 @@ import {
   ChevronDown,
   ChevronRight,
   CirclePower,
+  MegaphoneIcon,
 } from "lucide-react";
 import Image from "next/image";
 import dreckks from "../../public/tika-food.svg";
@@ -46,13 +47,15 @@ const navItems = [
     
     ]
   },
+  { name: "Quick Speak", href: "/admin/quick-speak", icon: MegaphoneIcon },
+
   { name: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
   // { name: "Support", href: "/admin/support", icon: HelpCircle },
-  {
-    name: "Notifications",
-    href: "/admin/notifications",
-    icon: Bell,
-  },
+  // {
+  //   name: "Notifications",
+  //   href: "/admin/notifications",
+  //   icon: Bell,
+  // },
   // { name: 'Notifications', href: '/admin/notifications', icon: Bell },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];

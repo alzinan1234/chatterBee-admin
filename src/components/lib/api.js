@@ -3,7 +3,7 @@
 // Purpose: Centralized API Configuration & Endpoints
 // ============================================
 
-const API_BASE_URL = "https://solve-lined-worker-guards.trycloudflare.com";
+const API_BASE_URL = "https://phi-loan-shares-engaging.trycloudflare.com";
 
 export const API_ENDPOINTS = {
   // ============================================
@@ -87,6 +87,17 @@ export const API_ENDPOINTS = {
     GET_SINGLE: (itemId) => `${API_BASE_URL}/api/dashboard/admin/items/${itemId}/`,
     UPDATE:     (itemId) => `${API_BASE_URL}/api/dashboard/admin/items/${itemId}/`,
     DELETE:     (itemId) => `${API_BASE_URL}/api/dashboard/admin/items/${itemId}/`,
+  },
+
+  // ============================================
+  // Quick Speak Endpoints
+  // ============================================
+  QUICK_SPEAKS: {
+    GET_ALL:    `${API_BASE_URL}/api/dashboard/admin/quickspeaks/`,
+    CREATE:     `${API_BASE_URL}/api/dashboard/admin/quickspeaks/`,
+    GET_SINGLE: (id) => `${API_BASE_URL}/api/dashboard/admin/quickspeaks/${id}/`,
+    UPDATE:     (id) => `${API_BASE_URL}/api/dashboard/admin/quickspeaks/${id}/`,
+    DELETE:     (id) => `${API_BASE_URL}/api/dashboard/admin/quickspeaks/${id}/`,
   },
 
   // ============================================
