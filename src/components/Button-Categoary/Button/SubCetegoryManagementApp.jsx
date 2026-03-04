@@ -314,14 +314,15 @@ const AddForm = ({ onDone, onCancel }) => {
   const [buddyMode, setBuddyMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Effective buddy mode for sub or item based on parent
-  const parentBuddyMode = selectedMain?.buddy_mode || false;
-  const subEffectiveBuddyMode = parentBuddyMode ? true : newSubBuddyMode;
-  // For existing sub: use its buddy_mode. For new sub: use the effective buddy mode we calculated above
+  // Full two-way buddy mode inheritance (ON locks ON, OFF locks OFF)
+  const parentBuddyMode = selectedMain?.buddy_mode ?? false;
+  const parentBuddyLocked = selectedMain !== null;
+  const subEffectiveBuddyMode = parentBuddyLocked ? parentBuddyMode : newSubBuddyMode;
   const subParentBuddyMode = subCatMode === 'existing'
-    ? (selectedSub?.buddy_mode || false)
+    ? (selectedSub?.buddy_mode ?? false)
     : subEffectiveBuddyMode;
-  const itemEffectiveBuddyMode = subParentBuddyMode ? true : buddyMode;
+  const subParentLocked = subCatMode === 'existing' ? selectedSub !== null : parentBuddyLocked;
+  const itemEffectiveBuddyMode = subParentLocked ? subParentBuddyMode : buddyMode;
 
   const handleAudioChange = (e) => {
     const f = e.target.files[0];
@@ -491,8 +492,8 @@ const AddForm = ({ onDone, onCancel }) => {
               <BuddyModeToggle
                 value={subEffectiveBuddyMode}
                 onChange={setNewSubBuddyMode}
-                locked={parentBuddyMode}
-                lockedReason="Parent category has Buddy Mode ON — sub-category must also be ON"
+                locked={parentBuddyLocked}
+                lockedReason={parentBuddyMode ? "Parent has Buddy Mode ON - sub-category must also be ON" : "Parent has Buddy Mode OFF - sub-category must also be OFF"}
               />
             </div>
           )}
@@ -565,8 +566,8 @@ const AddForm = ({ onDone, onCancel }) => {
             <BuddyModeToggle
               value={itemEffectiveBuddyMode}
               onChange={setBuddyMode}
-              locked={subParentBuddyMode}
-              lockedReason="Sub-category has Buddy Mode ON — item must also be ON"
+              locked={subParentLocked}
+              lockedReason={subParentBuddyMode ? "Sub-category has Buddy Mode ON - item must also be ON" : "Sub-category has Buddy Mode OFF - item must also be OFF"}
             />
 
             {/* Image */}
@@ -887,7 +888,7 @@ const ItemsTable = ({ items, onEdit, onDelete, loading, searchQuery, onSearchCha
                       </div>
                     </td>
                     {/* Audio */}
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-6 py-4 flex items-center justify-center">
                       {audioUrl
                         ? <AudioPlayButton src={audioUrl} itemId={item.id} playingId={playingId} onPlay={handlePlay} />
                         : <span className="text-gray-200 text-xs">—</span>

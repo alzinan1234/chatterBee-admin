@@ -218,7 +218,7 @@ const AddCategory = ({ onAddCategory, onCancel }) => {
         </div>
 
         {/* Audio */}
-        <div className="mb-8">
+        {/* <div className="mb-8">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Speak Audio <span className="text-gray-400 font-normal">(Optional)</span>
           </label>
@@ -240,7 +240,7 @@ const AddCategory = ({ onAddCategory, onCancel }) => {
               <p className="text-xs text-gray-500">MP3 or WAV, max 10MB</p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         <div className="flex items-center justify-start gap-4">
           <button type="button" onClick={onCancel} disabled={loading}
