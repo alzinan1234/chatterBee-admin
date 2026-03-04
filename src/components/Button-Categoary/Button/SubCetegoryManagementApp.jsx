@@ -15,6 +15,12 @@ import {
   formatItem
 } from '@/components/lib/categoryItemsApiClient';
 
+// ─── LANGUAGE OPTIONS ─────────────────────────────────────────
+const LANGUAGE_OPTIONS = [
+  { value: 'en', label: '🇺🇸 English' },
+  { value: 'es', label: '🇪🇸 Spanish' },
+];
+
 // ─── TOKEN ───────────────────────────────────────────────────
 const getToken = () => {
   if (typeof document === 'undefined') return null;
@@ -27,7 +33,7 @@ const fetchRootCategories = async () => {
   const token = getToken();
   if (!token) return { success: false, data: [], message: 'No token' };
   try {
-    const res = await fetch(API_ENDPOINTS.CATEGORIES.GET_ALL_ROOT_CATEGORIES, {
+    const res = await fetch(`${API_ENDPOINTS.CATEGORIES.GET_ALL_ROOT_CATEGORIES}?lang=en`, {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
     });
     const data = await res.json();
@@ -81,8 +87,73 @@ const UploadIcon = () => (
   </svg>
 );
 
-// ─── SMART DROPDOWN (reusable) ────────────────────────────────
-const SmartDropdown = ({ label, value, options, onSelect, placeholder, loading: dropLoading }) => {
+// ─── GET CATEGORY DISPLAY NAME ────────────────────────────────
+const getCatName = (cat) => {
+  if (!cat) return '';
+  const t = cat.translations;
+  if (!t) return cat.name || '';
+  return t.en?.name || t.es?.name || Object.values(t)[0]?.name || cat.name || '';
+};
+
+// ─── BUDDY MODE TOGGLE ────────────────────────────────────────
+const BuddyModeToggle = ({ value, onChange, locked, lockedReason }) => (
+  <div>
+    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+      Buddy Mode
+      {locked && (
+        <span className="normal-case text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+          🔒 Inherited
+        </span>
+      )}
+    </p>
+    <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${locked ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'}`}>
+      <button
+        type="button"
+        onClick={() => !locked && onChange(!value)}
+        disabled={locked}
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+          value ? 'bg-amber-400' : 'bg-gray-300'
+        } ${locked ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}
+        role="switch"
+        aria-checked={value}
+      >
+        <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition duration-200 ease-in-out ${value ? 'translate-x-5' : 'translate-x-0'}`} />
+      </button>
+      <div>
+        <span className={`text-sm font-semibold ${value ? 'text-amber-700' : 'text-gray-500'}`}>
+          {value ? 'Buddy Mode ON' : 'Buddy Mode OFF'}
+        </span>
+        {locked && lockedReason && <p className="text-xs text-amber-600 mt-0.5">{lockedReason}</p>}
+      </div>
+    </div>
+  </div>
+);
+
+// ─── LANGUAGE SELECTOR (compact pill) ────────────────────────
+const LangPills = ({ value, onChange }) => (
+  <div>
+    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Language</p>
+    <div className="flex gap-2">
+      {LANGUAGE_OPTIONS.map(lang => (
+        <button
+          key={lang.value}
+          type="button"
+          onClick={() => onChange(lang.value)}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${
+            value === lang.value
+              ? 'bg-amber-400 border-amber-400 text-gray-900'
+              : 'bg-white border-gray-200 text-gray-500 hover:border-amber-300 hover:bg-amber-50'
+          }`}
+        >
+          {lang.label}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+// ─── SMART DROPDOWN ───────────────────────────────────────────
+const SmartDropdown = ({ label, value, options, onSelect, placeholder, loading: dropLoading, renderName }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useEffect(() => {
@@ -90,6 +161,8 @@ const SmartDropdown = ({ label, value, options, onSelect, placeholder, loading: 
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
+
+  const getName = renderName || ((opt) => opt.name || opt.word || '');
 
   return (
     <div className="relative" ref={ref}>
@@ -99,27 +172,36 @@ const SmartDropdown = ({ label, value, options, onSelect, placeholder, loading: 
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm hover:border-amber-300 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all"
       >
-        <span className={value ? 'text-gray-800 font-medium' : 'text-gray-400'}>
-          {dropLoading ? 'Loading...' : (value?.name || value?.word || placeholder)}
-        </span>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={value ? 'text-gray-800 font-medium truncate' : 'text-gray-400'}>
+            {dropLoading ? 'Loading...' : (value ? getName(value) : placeholder)}
+          </span>
+          {value?.buddy_mode && (
+            <span className="flex-shrink-0 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full font-semibold border border-amber-200">Buddy</span>
+          )}
+        </div>
         {dropLoading ? <Spinner sm /> : <ChevronDown />}
       </button>
       {open && !dropLoading && (
         <div className="absolute z-40 mt-1.5 w-full bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
           <div className="max-h-52 overflow-y-auto">
-            {options.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-gray-400 text-center">Nothing here yet</p>
-            ) : options.map(opt => (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => { onSelect(opt); setOpen(false); }}
-                className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 hover:bg-amber-50 transition-colors ${value?.id === opt.id ? 'bg-amber-50 text-amber-700 font-semibold' : 'text-gray-700'}`}
-              >
-                {value?.id === opt.id && <CheckIcon />}
-                <span className={value?.id === opt.id ? '' : 'ml-5'}>{opt.name || opt.word}</span>
-              </button>
-            ))}
+            {options.length === 0
+              ? <p className="px-4 py-3 text-sm text-gray-400 text-center">Nothing here yet</p>
+              : options.map(opt => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => { onSelect(opt); setOpen(false); }}
+                  className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 hover:bg-amber-50 transition-colors ${value?.id === opt.id ? 'bg-amber-50 text-amber-700 font-semibold' : 'text-gray-700'}`}
+                >
+                  {value?.id === opt.id && <CheckIcon />}
+                  <span className={value?.id === opt.id ? '' : 'ml-5'}>{getName(opt)}</span>
+                  {opt.buddy_mode && (
+                    <span className="ml-auto px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full font-semibold border border-amber-200">Buddy</span>
+                  )}
+                </button>
+              ))
+            }
           </div>
         </div>
       )}
@@ -171,19 +253,16 @@ const ColorPicker = ({ selected, onSelect }) => {
 };
 
 // ─── STEP BREADCRUMB ──────────────────────────────────────────
-// Shows the serial tag trail: Main Cat → Sub Cat → Item
 const StepBreadcrumb = ({ mainCat, subCat, activeStep }) => {
   const steps = [
-    { id: 1, label: 'Main Category', value: mainCat?.name, emoji: '📁' },
-    { id: 2, label: 'Sub-Category',  value: subCat  ? (subCat.isNew ? `New: "${subCat.name}"` : subCat.name) : null, emoji: '📂' },
+    { id: 1, label: 'Main Category', value: mainCat ? getCatName(mainCat) : null, emoji: '📁' },
+    { id: 2, label: 'Sub-Category',  value: subCat  ? (subCat.isNew ? `New: "${subCat.name}"` : getCatName(subCat)) : null, emoji: '📂' },
     { id: 3, label: 'Item Details',  value: null, emoji: '🏷️' },
   ];
-
   return (
     <div className="flex items-center gap-1 flex-wrap mb-8">
       {steps.map((step, i) => (
         <React.Fragment key={step.id}>
-          {/* Tag chip */}
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
             activeStep === step.id
               ? 'bg-amber-400 border-amber-400 text-gray-900 shadow-sm'
@@ -193,11 +272,8 @@ const StepBreadcrumb = ({ mainCat, subCat, activeStep }) => {
           }`}>
             <span>{step.emoji}</span>
             <span>{step.value || step.label}</span>
-            {activeStep > step.id && step.value && (
-              <span className="ml-0.5 opacity-70"><CheckIcon /></span>
-            )}
+            {activeStep > step.id && step.value && <span className="ml-0.5 opacity-70"><CheckIcon /></span>}
           </div>
-          {/* Arrow between */}
           {i < steps.length - 1 && (
             <svg className={`h-3 w-3 flex-shrink-0 ${activeStep > step.id ? 'text-gray-400' : 'text-gray-200'}`} viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
@@ -213,33 +289,45 @@ const StepBreadcrumb = ({ mainCat, subCat, activeStep }) => {
 const AddForm = ({ onDone, onCancel }) => {
   const [step, setStep] = useState(1);
 
-  // Step 1 — main category
+  // Step 1
   const [mainCategories, setMainCategories] = useState([]);
   const [mainCatLoading, setMainCatLoading] = useState(false);
   const [selectedMain, setSelectedMain] = useState(null);
 
-  // Step 2 — sub-category
+  // Step 2
   const [subCategories, setSubCategories] = useState([]);
   const [subCatLoading, setSubCatLoading] = useState(false);
-  const [subCatMode, setSubCatMode] = useState('existing'); // 'existing' | 'new'
+  const [subCatMode, setSubCatMode] = useState('existing');
   const [selectedSub, setSelectedSub] = useState(null);
   const [newSubName, setNewSubName] = useState('');
+  const [newSubLang, setNewSubLang] = useState('en');
+  const [newSubBuddyMode, setNewSubBuddyMode] = useState(false);
 
-  // Step 3 — item
+  // Step 3
   const [word, setWord] = useState('');
+  const [lang, setLang] = useState('en');
   const [color, setColor] = useState(COLORS[0]);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [audioFile, setAudioFile] = useState(null);
   const [audioFileName, setAudioFileName] = useState('');
+  const [buddyMode, setBuddyMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Effective buddy mode for sub or item based on parent
+  const parentBuddyMode = selectedMain?.buddy_mode || false;
+  const subEffectiveBuddyMode = parentBuddyMode ? true : newSubBuddyMode;
+  // For existing sub: use its buddy_mode. For new sub: use the effective buddy mode we calculated above
+  const subParentBuddyMode = subCatMode === 'existing'
+    ? (selectedSub?.buddy_mode || false)
+    : subEffectiveBuddyMode;
+  const itemEffectiveBuddyMode = subParentBuddyMode ? true : buddyMode;
 
   const handleAudioChange = (e) => {
     const f = e.target.files[0];
     if (f) { setAudioFile(f); setAudioFileName(f.name); }
   };
 
-  // Load main categories on mount
   useEffect(() => {
     setMainCatLoading(true);
     fetchRootCategories().then(res => {
@@ -249,7 +337,6 @@ const AddForm = ({ onDone, onCancel }) => {
     });
   }, []);
 
-  // Load sub-categories when main cat selected
   useEffect(() => {
     if (!selectedMain) return;
     setSubCatLoading(true);
@@ -263,27 +350,31 @@ const AddForm = ({ onDone, onCancel }) => {
       }
       setSubCatLoading(false);
     });
+    // If parent buddy_mode is true, lock sub to true
+    if (selectedMain.buddy_mode) setNewSubBuddyMode(true);
   }, [selectedMain]);
+
+  // When selectedSub changes, if its buddy_mode is true, lock item to true
+  useEffect(() => {
+    if (selectedSub?.buddy_mode) setBuddyMode(true);
+  }, [selectedSub]);
 
   const handleImageChange = (e) => {
     const f = e.target.files[0];
     if (f) { setImageFile(f); setImagePreview(URL.createObjectURL(f)); }
   };
 
-  // STEP 1 → 2
   const goToStep2 = () => {
     if (!selectedMain) { toast.error('Please select a main category'); return; }
     setStep(2);
   };
 
-  // STEP 2 → 3
   const goToStep3 = () => {
     if (subCatMode === 'existing' && !selectedSub) { toast.error('Please select a sub-category'); return; }
     if (subCatMode === 'new' && !newSubName.trim()) { toast.error('Enter a sub-category name'); return; }
     setStep(3);
   };
 
-  // STEP 3 → SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!word.trim()) { toast.error('Word is required'); return; }
@@ -294,7 +385,9 @@ const AddForm = ({ onDone, onCancel }) => {
 
     if (subCatMode === 'new') {
       toast.loading('Creating sub-category...', { id: 'save' });
-      const res = await createSubCategory(selectedMain.id, newSubName.trim());
+      const res = await createSubCategory(
+        selectedMain.id, newSubName.trim(), '#FF5733', null, null, true, newSubLang, subEffectiveBuddyMode
+      );
       if (!res.success) { toast.error(res.message, { id: 'save' }); setSubmitting(false); return; }
       subCategoryId = res.data?.id;
       if (!subCategoryId) { toast.error('Could not get sub-category ID', { id: 'save' }); setSubmitting(false); return; }
@@ -303,7 +396,9 @@ const AddForm = ({ onDone, onCancel }) => {
     }
 
     toast.loading('Creating item...', { id: 'save' });
-    const itemRes = await createItem(subCategoryId, word.trim(), '', color.value, imageFile, audioFile);
+    const itemRes = await createItem(
+      subCategoryId, word.trim(), '', color.value, imageFile, audioFile, true, lang, itemEffectiveBuddyMode
+    );
     if (!itemRes.success) { toast.error(itemRes.message, { id: 'save' }); setSubmitting(false); return; }
 
     toast.success('All done! 🎉', { id: 'save' });
@@ -311,15 +406,12 @@ const AddForm = ({ onDone, onCancel }) => {
     onDone();
   };
 
-  // Derived sub-cat object for breadcrumb
   const subCatForCrumb = step >= 3
     ? (subCatMode === 'new' ? { name: newSubName, isNew: true } : selectedSub)
     : null;
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 max-w-2xl mx-auto">
-
-      {/* Step breadcrumb trail */}
       <StepBreadcrumb mainCat={selectedMain} subCat={subCatForCrumb} activeStep={step} />
 
       {/* ── STEP 1: Main Category ── */}
@@ -333,14 +425,18 @@ const AddForm = ({ onDone, onCancel }) => {
             onSelect={setSelectedMain}
             placeholder="Select a main category..."
             loading={mainCatLoading}
+            renderName={getCatName}
           />
+          {selectedMain?.buddy_mode && (
+            <div className="mt-3 flex items-center gap-2 text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
+              <span>🔒</span>
+              <span>This category has Buddy Mode ON — sub-categories and items will inherit it.</span>
+            </div>
+          )}
           <div className="flex gap-3 mt-8">
-            <button type="button" onClick={onCancel}
-              className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-            >Cancel</button>
+            <button type="button" onClick={onCancel} className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
             <button type="button" onClick={goToStep2} disabled={!selectedMain || mainCatLoading}
-              className="flex-1 px-5 py-2.5 bg-amber-400 hover:bg-amber-500 disabled:opacity-40 rounded-xl text-sm font-bold text-gray-900 transition-colors"
-            >Next →</button>
+              className="flex-1 px-5 py-2.5 bg-amber-400 hover:bg-amber-500 disabled:opacity-40 rounded-xl text-sm font-bold text-gray-900 transition-colors">Next →</button>
           </div>
         </div>
       )}
@@ -350,10 +446,9 @@ const AddForm = ({ onDone, onCancel }) => {
         <div>
           <h2 className="text-xl font-bold text-gray-800 mb-1">Sub-Category</h2>
           <p className="text-sm text-gray-400 mb-6">
-            Pick an existing one under <span className="font-semibold text-gray-700">{selectedMain?.name}</span> or create a new one.
+            Pick an existing one under <span className="font-semibold text-gray-700">{getCatName(selectedMain)}</span> or create a new one.
           </p>
 
-          {/* Toggle pills */}
           <div className="flex gap-2 mb-4">
             {['existing', 'new'].map(m => (
               <button
@@ -378,27 +473,33 @@ const AddForm = ({ onDone, onCancel }) => {
               onSelect={setSelectedSub}
               placeholder="Select sub-category..."
               loading={subCatLoading}
+              renderName={getCatName}
             />
           ) : (
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">New Sub-Category Name</p>
-              <input
-                type="text"
-                value={newSubName}
-                onChange={e => setNewSubName(e.target.value)}
-                placeholder="e.g. Animals, Colors, Food..."
-                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all"
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">New Sub-Category Name</p>
+                <input
+                  type="text" value={newSubName} onChange={e => setNewSubName(e.target.value)}
+                  placeholder="e.g. Animals, Colors, Food..."
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all"
+                />
+              </div>
+              {/* Lang for new sub-cat */}
+              <LangPills value={newSubLang} onChange={setNewSubLang} />
+              {/* Buddy mode for new sub-cat */}
+              <BuddyModeToggle
+                value={subEffectiveBuddyMode}
+                onChange={setNewSubBuddyMode}
+                locked={parentBuddyMode}
+                lockedReason="Parent category has Buddy Mode ON — sub-category must also be ON"
               />
             </div>
           )}
 
           <div className="flex gap-3 mt-8">
-            <button type="button" onClick={() => setStep(1)}
-              className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-            >← Back</button>
-            <button type="button" onClick={goToStep3}
-              className="flex-1 px-5 py-2.5 bg-amber-400 hover:bg-amber-500 rounded-xl text-sm font-bold text-gray-900 transition-colors"
-            >Next →</button>
+            <button type="button" onClick={() => setStep(1)} className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">← Back</button>
+            <button type="button" onClick={goToStep3} className="flex-1 px-5 py-2.5 bg-amber-400 hover:bg-amber-500 rounded-xl text-sm font-bold text-gray-900 transition-colors">Next →</button>
           </div>
         </div>
       )}
@@ -410,19 +511,17 @@ const AddForm = ({ onDone, onCancel }) => {
           <p className="text-sm text-gray-400 mb-6">Fill in the button/item info.</p>
 
           <div className="space-y-5">
+            {/* Language */}
+            <LangPills value={lang} onChange={setLang} />
+
             {/* Word */}
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Word *</p>
-              <input
-                type="text"
-                value={word}
-                onChange={e => setWord(e.target.value)}
-                placeholder="Type the word"
-                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all"
-              />
+              <input type="text" value={word} onChange={e => setWord(e.target.value)} placeholder="Type the word"
+                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all" />
             </div>
 
-            {/* Audio Upload */}
+            {/* Audio */}
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 Speak Audio * <span className="normal-case font-normal text-gray-400">MP3 file, required</span>
@@ -462,6 +561,14 @@ const AddForm = ({ onDone, onCancel }) => {
             {/* Color */}
             <ColorPicker selected={color} onSelect={setColor} />
 
+            {/* Buddy Mode */}
+            <BuddyModeToggle
+              value={itemEffectiveBuddyMode}
+              onChange={setBuddyMode}
+              locked={subParentBuddyMode}
+              lockedReason="Sub-category has Buddy Mode ON — item must also be ON"
+            />
+
             {/* Image */}
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Image / Icon <span className="normal-case font-normal text-gray-400">(optional)</span></p>
@@ -488,12 +595,9 @@ const AddForm = ({ onDone, onCancel }) => {
           </div>
 
           <div className="flex gap-3 mt-8">
-            <button type="button" onClick={() => setStep(2)}
-              className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-            >← Back</button>
+            <button type="button" onClick={() => setStep(2)} className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">← Back</button>
             <button type="submit" disabled={submitting}
-              className="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-500 disabled:opacity-40 rounded-xl text-sm font-bold text-gray-900 transition-colors"
-            >
+              className="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-500 disabled:opacity-40 rounded-xl text-sm font-bold text-gray-900 transition-colors">
               {submitting ? <><Spinner sm /> Creating...</> : '✓ Create Item'}
             </button>
           </div>
@@ -505,21 +609,29 @@ const AddForm = ({ onDone, onCancel }) => {
 
 // ─── EDIT FORM ────────────────────────────────────────────────
 const EditForm = ({ item, onDone, onCancel }) => {
-  const [word, setWord] = useState(item?.word || '');
+  // Detect existing lang/word from translations
+  const existingLang = Object.keys(item.translations || {})[0] || 'en';
+  const existingWord = item.translations?.[existingLang]?.word || item.word || '';
+  const existingAudioUrl = item.translations?.[existingLang]?.speak || null;
+
+  const [word, setWord] = useState(existingWord);
+  const [lang, setLang] = useState(existingLang);
   const [color, setColor] = useState(COLORS.find(c => c.value === item?.color) || COLORS[0]);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(item?.image_icon || '');
   const [audioFile, setAudioFile] = useState(null);
   const [audioFileName, setAudioFileName] = useState('');
-  // existing audio URL from API
-  const existingAudioUrl = item?.speak && (item.speak.startsWith('http') || item.speak.startsWith('/')) ? item.speak : null;
+  const [buddyMode, setBuddyMode] = useState(item?.buddy_mode || false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Is parent sub-category buddy_mode locked?
+  const parentBuddyLocked = item.subCategoryBuddyMode || false;
+  const effectiveBuddyMode = parentBuddyLocked ? true : buddyMode;
 
   const handleImageChange = (e) => {
     const f = e.target.files[0];
     if (f) { setImageFile(f); setImagePreview(URL.createObjectURL(f)); }
   };
-
   const handleAudioChange = (e) => {
     const f = e.target.files[0];
     if (f) { setAudioFile(f); setAudioFileName(f.name); }
@@ -531,7 +643,7 @@ const EditForm = ({ item, onDone, onCancel }) => {
     if (!audioFile && !existingAudioUrl) { toast.error('Audio file is required'); return; }
     setSubmitting(true);
     toast.loading('Updating...', { id: 'edit' });
-    const res = await updateItem(item.id, word.trim(), '', color.value, imageFile, audioFile);
+    const res = await updateItem(item.id, word.trim(), '', color.value, imageFile, audioFile, true, lang, effectiveBuddyMode);
     if (!res.success) { toast.error(res.message, { id: 'edit' }); setSubmitting(false); return; }
     toast.success('Item updated!', { id: 'edit' });
     setSubmitting(false);
@@ -540,12 +652,12 @@ const EditForm = ({ item, onDone, onCancel }) => {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 max-w-2xl mx-auto">
-      {/* Breadcrumb showing context */}
+      {/* Context breadcrumb */}
       <div className="flex items-center gap-1.5 flex-wrap mb-8">
         {[
           { emoji: '📁', label: item.mainCategoryName || 'Main' },
           { emoji: '📂', label: item.subCategoryName || 'Sub' },
-          { emoji: '✏️', label: `Editing: ${item.word}` },
+          { emoji: '✏️', label: `Editing: ${existingWord}` },
         ].map((t, i, arr) => (
           <React.Fragment key={i}>
             <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${i === arr.length - 1 ? 'bg-amber-400 border-amber-400 text-gray-900' : 'bg-gray-900 border-gray-900 text-white'}`}>
@@ -564,14 +676,17 @@ const EditForm = ({ item, onDone, onCancel }) => {
       <p className="text-sm text-gray-400 mb-6">Update the details below.</p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Language */}
+        <LangPills value={lang} onChange={setLang} />
+
+        {/* Word */}
         <div>
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Word *</p>
           <input type="text" value={word} onChange={e => setWord(e.target.value)} placeholder="Type the word"
-            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all"
-          />
+            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all" />
         </div>
 
-        {/* Audio Upload */}
+        {/* Audio */}
         <div>
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
             Speak Audio * <span className="normal-case font-normal text-gray-400">MP3 file</span>
@@ -624,8 +739,18 @@ const EditForm = ({ item, onDone, onCancel }) => {
           )}
         </div>
 
+        {/* Color */}
         <ColorPicker selected={color} onSelect={setColor} />
 
+        {/* Buddy Mode */}
+        <BuddyModeToggle
+          value={effectiveBuddyMode}
+          onChange={setBuddyMode}
+          locked={parentBuddyLocked}
+          lockedReason="Sub-category has Buddy Mode ON — item must also be ON"
+        />
+
+        {/* Image */}
         <div>
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Image / Icon <span className="normal-case font-normal text-gray-400">(optional)</span></p>
           {imagePreview ? (
@@ -646,12 +771,9 @@ const EditForm = ({ item, onDone, onCancel }) => {
         </div>
 
         <div className="flex gap-3 pt-2">
-          <button type="button" onClick={onCancel}
-            className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-          >Cancel</button>
+          <button type="button" onClick={onCancel} className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
           <button type="submit" disabled={submitting}
-            className="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-500 disabled:opacity-40 rounded-xl text-sm font-bold text-gray-900 transition-colors"
-          >
+            className="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-500 disabled:opacity-40 rounded-xl text-sm font-bold text-gray-900 transition-colors">
             {submitting ? <><Spinner sm /> Saving...</> : '✓ Update Item'}
           </button>
         </div>
@@ -663,24 +785,19 @@ const EditForm = ({ item, onDone, onCancel }) => {
 // ─── AUDIO PLAY BUTTON ───────────────────────────────────────
 const AudioPlayButton = ({ src, playingId, itemId, onPlay }) => {
   const isPlaying = playingId === itemId;
-
   return (
     <button
       onClick={() => onPlay(itemId, src)}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-        isPlaying
-          ? 'bg-amber-400 text-gray-900 shadow-sm scale-95'
-          : 'bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700'
+        isPlaying ? 'bg-amber-400 text-gray-900 shadow-sm scale-95' : 'bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700'
       }`}
       title={isPlaying ? 'Pause' : 'Play audio'}
     >
       {isPlaying ? (
-        // Pause icon
         <svg className="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
         </svg>
       ) : (
-        // Play icon
         <svg className="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
         </svg>
@@ -693,24 +810,12 @@ const AudioPlayButton = ({ src, playingId, itemId, onPlay }) => {
 // ─── ITEMS TABLE ──────────────────────────────────────────────
 const ItemsTable = ({ items, onEdit, onDelete, loading, searchQuery, onSearchChange }) => {
   const filtered = searchItems(items, searchQuery);
-
-  // Audio state — one plays at a time
   const [playingId, setPlayingId] = useState(null);
   const audioRef = useRef(null);
 
   const handlePlay = (itemId, src) => {
-    // If same item — toggle pause
-    if (playingId === itemId) {
-      audioRef.current?.pause();
-      setPlayingId(null);
-      return;
-    }
-    // Stop previous
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    // Play new
+    if (playingId === itemId) { audioRef.current?.pause(); setPlayingId(null); return; }
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     const audio = new Audio(src);
     audio.play().catch(() => toast.error('Could not play audio'));
     audio.onended = () => setPlayingId(null);
@@ -719,10 +824,7 @@ const ItemsTable = ({ items, onEdit, onDelete, loading, searchQuery, onSearchCha
     setPlayingId(itemId);
   };
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => { audioRef.current?.pause(); };
-  }, []);
+  useEffect(() => { return () => { audioRef.current?.pause(); }; }, []);
 
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
@@ -733,13 +835,8 @@ const ItemsTable = ({ items, onEdit, onDelete, loading, searchQuery, onSearchCha
         </div>
         <div className="flex items-center gap-2 px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl w-56">
           <SearchIcon />
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={e => onSearchChange(e.target.value)}
-            className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 w-full"
-          />
+          <input type="text" placeholder="Search..." value={searchQuery} onChange={e => onSearchChange(e.target.value)}
+            className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 w-full" />
         </div>
       </div>
 
@@ -752,53 +849,50 @@ const ItemsTable = ({ items, onEdit, onDelete, loading, searchQuery, onSearchCha
               <tr className="bg-gray-50 border-b border-gray-100">
                 <th className="text-left px-6 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Path</th>
                 <th className="text-left px-6 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Word</th>
-             
+                <th className="text-center px-6 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Lang</th>
                 <th className="text-center px-6 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Audio</th>
                 <th className="text-center px-6 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Image</th>
                 <th className="text-center px-6 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Color</th>
+                <th className="text-center px-6 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Buddy</th>
                 <th className="text-center px-6 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.length > 0 ? filtered.map(item => {
                 const fmt = formatItem(item);
-                // speak field: could be audio URL or text. Audio if it looks like a URL/path.
-                const audioUrl = item.speak && (item.speak.startsWith('http') || item.speak.startsWith('/')) ? item.speak : null;
-                const speakAsText = item.speak_as || (!audioUrl ? item.speak : null);
+                // Translations: show all langs available
+                const langs = Object.keys(item.translations || {});
+                // Find first audio URL
+                const audioUrl = langs.map(l => item.translations[l]?.speak).find(s => s && (s.startsWith('http') || s.startsWith('/'))) || null;
 
                 return (
                   <tr key={item.id} className="hover:bg-amber-50/30 transition-colors">
-                    {/* Path as tag trail */}
+                    {/* Path */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1 flex-wrap">
-                        <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full font-medium">
-                          {item.mainCategoryName || '—'}
-                        </span>
+                        <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full font-medium">{item.mainCategoryName || '—'}</span>
                         <svg className="h-2.5 w-2.5 text-gray-300 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                         </svg>
-                        <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs rounded-full font-semibold border border-amber-100">
-                          {item.subCategoryName || '—'}
-                        </span>
+                        <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs rounded-full font-semibold border border-amber-100">{item.subCategoryName || '—'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-gray-800">{fmt.formattedWord}</td>
-                   
-
-                    {/* Audio column */}
-                    <td className="px-6 py-4 text-center flex items-center justify-center">
-                      {audioUrl ? (
-                        <AudioPlayButton
-                          src={audioUrl}
-                          itemId={item.id}
-                          playingId={playingId}
-                          onPlay={handlePlay}
-                        />
-                      ) : (
-                        <span className="text-gray-200 text-xs">—</span>
-                      )}
+                    {/* Language badges */}
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex gap-1 justify-center flex-wrap">
+                        {langs.map(l => (
+                          <span key={l} className="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 uppercase">{l}</span>
+                        ))}
+                      </div>
                     </td>
-
+                    {/* Audio */}
+                    <td className="px-6 py-4 text-center">
+                      {audioUrl
+                        ? <AudioPlayButton src={audioUrl} itemId={item.id} playingId={playingId} onPlay={handlePlay} />
+                        : <span className="text-gray-200 text-xs">—</span>
+                      }
+                    </td>
                     <td className="px-6 py-4 text-center">
                       {fmt.hasImage
                         ? <img src={item.image_icon} alt={fmt.formattedWord} className="h-9 w-9 mx-auto object-cover rounded-lg border border-gray-100" />
@@ -808,21 +902,30 @@ const ItemsTable = ({ items, onEdit, onDelete, loading, searchQuery, onSearchCha
                     <td className="px-6 py-4 text-center">
                       <div className="h-7 w-7 mx-auto rounded-full border border-gray-100 shadow-sm" style={{ backgroundColor: fmt.displayColor }} />
                     </td>
+                    {/* Buddy Mode badge */}
+                    <td className="px-6 py-4 text-center">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                        item.buddy_mode
+                          ? 'bg-amber-100 text-amber-700 border border-amber-200'
+                          : 'bg-gray-100 text-gray-400 border border-gray-200'
+                      }`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${item.buddy_mode ? 'bg-amber-500' : 'bg-gray-400'}`} />
+                        {item.buddy_mode ? 'ON' : 'OFF'}
+                      </span>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2 justify-center">
                         <button onClick={() => onEdit(item)}
-                          className="px-3.5 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                        >Edit</button>
+                          className="px-3.5 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">Edit</button>
                         <button onClick={() => onDelete(item.id, fmt.formattedWord)}
-                          className="px-3.5 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                        >Delete</button>
+                          className="px-3.5 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">Delete</button>
                       </div>
                     </td>
                   </tr>
                 );
               }) : (
                 <tr>
-                  <td colSpan="7" className="px-6 py-16 text-center text-gray-300 text-sm">
+                  <td colSpan="8" className="px-6 py-16 text-center text-gray-300 text-sm">
                     {searchQuery ? `No results for "${searchQuery}"` : 'No items yet — hit Add Item to get started'}
                   </td>
                 </tr>
@@ -839,7 +942,7 @@ const ItemsTable = ({ items, onEdit, onDelete, loading, searchQuery, onSearchCha
 export default function SubCategoryManagement() {
   const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [view, setView] = useState('list'); // 'list' | 'add' | 'edit'
+  const [view, setView] = useState('list');
   const [editingItem, setEditingItem] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -847,22 +950,20 @@ export default function SubCategoryManagement() {
 
   const fetchAllData = async () => {
     setLoading(true);
-    // 1. Get all main categories
     const mainRes = await fetchRootCategories();
     if (!mainRes.success || mainRes.data.length === 0) { setLoading(false); return; }
 
-    // 2. For each main cat, get sub-categories
     const subResults = await Promise.all(
       mainRes.data.map(mc =>
         getSubCategoriesByParent(mc.id).then(r => ({
           mainCategoryId: mc.id,
-          mainCategoryName: mc.name,
+          mainCategoryName: getCatName(mc),
+          mainBuddyMode: mc.buddy_mode || false,
           subs: r.success ? r.data : []
         }))
       )
     );
 
-    // 3. For each sub-cat, get items
     const itemResults = await Promise.all(
       subResults.flatMap(r =>
         r.subs.map(sc =>
@@ -870,14 +971,14 @@ export default function SubCategoryManagement() {
             mainCategoryId: r.mainCategoryId,
             mainCategoryName: r.mainCategoryName,
             subCategoryId: sc.id,
-            subCategoryName: sc.name,
+            subCategoryName: getCatName(sc),
+            subCategoryBuddyMode: sc.buddy_mode || false,
             items: ir.success ? ir.data : []
           }))
         )
       )
     );
 
-    // 4. Flatten
     const flat = itemResults.flatMap(r =>
       r.items.map(item => ({
         ...item,
@@ -885,6 +986,9 @@ export default function SubCategoryManagement() {
         mainCategoryName: r.mainCategoryName,
         subCategoryId: r.subCategoryId,
         subCategoryName: r.subCategoryName,
+        subCategoryBuddyMode: r.subCategoryBuddyMode,
+        // Resolve word from translations
+        word: item.translations?.en?.word || item.translations?.es?.word || item.word || '',
       }))
     );
 
@@ -897,17 +1001,13 @@ export default function SubCategoryManagement() {
       <div className="flex flex-col gap-3">
         <p className="text-sm font-semibold text-gray-800">Delete <strong>"{itemName}"</strong>?</p>
         <div className="flex justify-end gap-2">
-          <button onClick={() => toast.dismiss(t.id)}
-            className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold"
-          >Cancel</button>
+          <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold">Cancel</button>
           <button onClick={async () => {
             const res = await deleteItem(itemId);
             toast.dismiss(t.id);
             res.success ? toast.success('Deleted') : toast.error(res.message);
             if (res.success) fetchAllData();
-          }}
-            className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-semibold"
-          >Delete</button>
+          }} className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-semibold">Delete</button>
         </div>
       </div>
     ), { duration: 6000, style: { minWidth: '280px' } });
@@ -916,30 +1016,22 @@ export default function SubCategoryManagement() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8 font-sans">
       <Toaster position="top-right" />
-      <div className=" mx-auto">
-
-        {/* Header */}
+      <div className="mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Item Management</h1>
             <p className="text-sm text-gray-400 mt-0.5">{allItems.length} items across all categories</p>
           </div>
           {view === 'list' && (
-            <button
-              onClick={() => setView('add')}
-              className="flex items-center px-5 py-2.5 bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold text-sm rounded-xl transition-colors shadow-sm"
-            >
+            <button onClick={() => setView('add')}
+              className="flex items-center px-5 py-2.5 bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold text-sm rounded-xl transition-colors shadow-sm">
               <PlusIcon /> Add Item
             </button>
           )}
         </div>
 
-        {/* Views */}
         {view === 'add' && (
-          <AddForm
-            onDone={() => { setView('list'); fetchAllData(); }}
-            onCancel={() => setView('list')}
-          />
+          <AddForm onDone={() => { setView('list'); fetchAllData(); }} onCancel={() => setView('list')} />
         )}
         {view === 'edit' && editingItem && (
           <EditForm

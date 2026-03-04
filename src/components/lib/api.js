@@ -3,7 +3,7 @@
 // Purpose: Centralized API Configuration & Endpoints
 // ============================================
 
-const API_BASE_URL = "https://phi-loan-shares-engaging.trycloudflare.com";
+const API_BASE_URL = "https://rangers-amenities-collaboration-great.trycloudflare.com";
 
 export const API_ENDPOINTS = {
   // ============================================
