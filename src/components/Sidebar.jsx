@@ -25,17 +25,12 @@ import {
 import Image from "next/image";
 import dreckks from "../../public/tika-food.svg";
 import barss from "../../public/icon/bars.png";
+import { logoutUser } from "./lib/apiClient";
+
 
 const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  // {
-  //   name: "Rider Registrations",
-  //   href: "/admin/rider-registrations",
-  //   icon: FileText,
-  // },
   { name: "User Management", href: "/admin/user-management", icon: Users },
-  // { name: "Earning", href: "/admin/earning", icon: Wallet },
-  // { name: "Rider Management", href: "/admin/rider-management", icon: Bike },
   { 
     name: 'All Category', 
     href: '/admin/button-categoary', 
@@ -44,19 +39,10 @@ const navItems = [
     dropdownItems: [
       { name: "Category", href: "/admin/button-categoary/category" },
       { name: "Sub Category", href: "/admin/button-categoary/sub-cetegoary" },
-    
     ]
   },
   { name: "Quick Speak", href: "/admin/quick-speak", icon: MegaphoneIcon },
-
   { name: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
-  // { name: "Support", href: "/admin/support", icon: HelpCircle },
-  // {
-  //   name: "Notifications",
-  //   href: "/admin/notifications",
-  //   icon: Bell,
-  // },
-  // { name: 'Notifications', href: '/admin/notifications', icon: Bell },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -117,7 +103,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               if (hasDropdown) {
                 return (
                   <div key={name}>
-                    {/* Main dropdown trigger */}
                     <button
                       onClick={() => setDropdownOpen(!dropdownOpen)}
                       className={`flex items-center justify-between px-4 w-[218px] mx-auto py-2 transition-all rounded ${
@@ -137,7 +122,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                       )}
                     </button>
                     
-                    {/* Dropdown items */}
                     {dropdownOpen && (
                       <div className="ml-8 mt-2 space-y-2">
                         {dropdownItems.map((dropdownItem) => (
@@ -178,7 +162,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
             {/* Logout Button */}
             <div className="border-t border-[#D6D6D6] pt-6 ">
-              <button className="flex ml-9 gap-2 items-center text-[#FF0000] hover:text-red-600">
+              <button
+                onClick={logoutUser}
+                className="flex ml-9 gap-2 items-center text-[#FF0000] hover:text-red-600"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"

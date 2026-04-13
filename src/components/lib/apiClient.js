@@ -71,8 +71,7 @@ export const apiCall = async (
     // If unauthorized, remove token and redirect to login
     if (response.status === 401) {
       removeTokenFromCookie();
-      // Uncomment to redirect to login
-      // window.location.href = "/";
+      window.location.href = "/";
       throw new Error("Session expired. Please login again.");
     }
 
@@ -169,11 +168,18 @@ export const requestPasswordReset = async (email) => {
 };
 
 /**
- * Logout - Remove token
+ * Logout - Calls backend logout API, clears token, redirects to login
  */
-export const logoutUser = () => {
-  removeTokenFromCookie();
-  window.location.href = "/";
+export const logoutUser = async () => {
+  try {
+    await apiCall(API_ENDPOINTS.AUTH.LOGOUT, "POST");
+  } catch (error) {
+    // Even if the API call fails, we still clear the token and redirect
+    console.error("Logout API error:", error);
+  } finally {
+    removeTokenFromCookie();
+    window.location.href = "/";
+  }
 };
 
 /**
