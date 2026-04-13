@@ -24,7 +24,6 @@ export default function ChangePasswordForm() {
       toast.error("Please enter a new password");
       return;
     }
-
     if (newPassword.length < 8) {
       toast.error("New password must be at least 8 characters long");
       return;
@@ -46,9 +45,8 @@ export default function ChangePasswordForm() {
       const response = await changePassword(
         currentPassword,
         newPassword,
-        confirmedPassword
+        confirmedPassword,        
       );
-
       if (response.success) {
         toast.success(response.message || "Password changed successfully!");
         

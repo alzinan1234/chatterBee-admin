@@ -262,7 +262,6 @@ const QuickSpeakForm = ({ initialData, onSubmit, onCancel, isEdit }) => {
             </div>
           </div>
         </div>
-
         {/* Speak Audio */}
         <div className="mb-8">
           <label className="block text-sm font-medium text-gray-700 mb-2">Speak / Audio (Optional)</label>
@@ -401,7 +400,7 @@ const QuickSpeakList = ({ quickSpeaks, onEdit, onDelete, loading }) => {
               <tr>
                 <td colSpan="7" className="p-8 text-center">
                   <div className="flex justify-center">
-                    <LoadingSpinner />
+                    <LoadingSpinner /> 
                   </div>
                 </td>
               </tr>

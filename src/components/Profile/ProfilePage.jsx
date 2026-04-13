@@ -15,19 +15,17 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Profile data state
+ 
   const [profileData, setProfileData] = useState({
     full_name: "",
     email: "",
     phone: "",
     avatar: null,
-  });
-  
+  }); 
   const [profileImage, setProfileImage] = useState("/image/userImage.png");
   const [avatarFile, setAvatarFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const fileInputRef = useRef(null);
-
   // Fetch profile data on component mount
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -70,7 +68,6 @@ export default function ProfilePage() {
         setIsLoading(false);
       }
     };
-
     fetchProfileData();
   }, []);
 
@@ -93,19 +90,17 @@ export default function ProfilePage() {
         toast.error("Image size should be less than 5MB");
         return;
       }
-      
       // Create preview URL
+      
       const previewUrl = URL.createObjectURL(file);
       setPreviewImage(previewUrl);
       setAvatarFile(file);
       toast.success("Image selected! Click 'Save Changes' to upload.");
     }
   };
-
   const handleImageClick = () => {
     fileInputRef.current.click();
   };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setProfileData(prev => ({
@@ -122,9 +117,7 @@ export default function ProfilePage() {
       toast.error("Full name is required");
       return;
     }
-
     setIsSaving(true);
-
     try {
       // Create FormData for file upload
       const formData = new FormData();
@@ -133,7 +126,7 @@ export default function ProfilePage() {
       // Email is not included - backend should not allow email changes
       // Only send phone if it exists
       if (profileData.phone) {
-        formData.append("phone", profileData.phone);
+        formData.append("phone", profileData.phone); 
       }
       
       // Only append avatar if a new file was selected
@@ -177,8 +170,7 @@ export default function ProfilePage() {
           // Dispatch custom event to update Topbar
           window.dispatchEvent(new CustomEvent('profileUpdated', { 
             detail: { avatar: imageUrlWithCache } 
-          }));
-          
+          })); 
           // Clear preview after successful upload
           if (previewImage) {
             URL.revokeObjectURL(previewImage);
@@ -229,7 +221,6 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-white text-black flex justify-center items-start pt-8 pb-8 rounded-lg">
       <Toaster position="top-center" reverseOrder={false} />
-      
       <div
         className="flex items-center gap-4 cursor-pointer ml-5"
         onClick={handleBackClick}
@@ -274,7 +265,7 @@ export default function ProfilePage() {
               </span>
             </div>
             <div className="flex flex-col gap-[12px]">
-              <h2 className="text-[24px] font-bold mt-3 text-black">
+              <h2 className="text-[24px] font-bold mt-3 text-black"> 
                 {profileData.full_name || "Loading..."}
               </h2>
               <p className="text-black font-[400] text-xl">Admin</p>
@@ -303,7 +294,6 @@ export default function ProfilePage() {
               Change Password
             </button>
           </div>
-
           <input
             type="file"
             ref={fileInputRef}
@@ -311,7 +301,6 @@ export default function ProfilePage() {
             style={{ display: "none" }}
             accept="image/png, image/jpeg, image/jpg"
           />
-
           {activeTab === "editProfile" && (
             <div className="p-6 flex flex-col items-center">
               <form className="w-full max-w-[982px]" onSubmit={handleSubmit}>

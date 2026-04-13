@@ -77,7 +77,6 @@ export const API_ENDPOINTS = {
     UPDATE:       (subCategoryId) => `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/`,
     DELETE:       (subCategoryId) => `${API_BASE_URL}/api/dashboard/admin/subcategories/${subCategoryId}/`,
   },
-
   // ============================================
   // Category Items / Buttons Endpoints
   // ============================================

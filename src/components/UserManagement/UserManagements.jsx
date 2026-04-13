@@ -194,7 +194,6 @@ const UserList = () => {
                         errorMessages.push(errors[field]);
                     }
                 });
-                
                 errorMsg = errorMessages.join(' • ');
             } else if (err.response?.data?.message) {
                 errorMsg = err.response.data.message;
