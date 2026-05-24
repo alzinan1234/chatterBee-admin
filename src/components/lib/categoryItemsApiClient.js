@@ -67,7 +67,7 @@ export const getSingleItem = async (itemId) => {
  * @param {string} speakAs
  * @param {string} color
  * @param {File} imageFile
- * @param {File} audioFile
+ * @param {File|null} audioFile - OPTIONAL: if null, app will use device TTS
  * @param {boolean} isActive
  * @param {string} lang - "en" | "es"
  * @param {boolean} buddyMode
@@ -101,6 +101,7 @@ export const createItem = async (
       if (imageFile.size > 5 * 1024 * 1024) return { success: false, data: null, message: "Image file size must be less than 5MB" };
       formData.append("image_icon", imageFile);
     }
+    // Audio is OPTIONAL — if not provided, app uses device TTS with the word label
     if (audioFile) {
       if (audioFile.size > 10 * 1024 * 1024) return { success: false, data: null, message: "Audio file size must be less than 10MB" };
       formData.append("speak", audioFile);
@@ -126,7 +127,7 @@ export const createItem = async (
  * @param {string} speakAs
  * @param {string} color
  * @param {File} imageFile
- * @param {File} audioFile
+ * @param {File|null} audioFile - OPTIONAL: if null, app will use device TTS
  * @param {boolean} isActive
  * @param {string} lang - "en" | "es"
  * @param {boolean} buddyMode
@@ -160,6 +161,7 @@ export const updateItem = async (
       if (imageFile.size > 5 * 1024 * 1024) return { success: false, data: null, message: "Image file size must be less than 5MB" };
       formData.append("image_icon", imageFile);
     }
+    // Audio is OPTIONAL — if not provided, app uses device TTS with the word label
     if (audioFile) {
       if (audioFile.size > 10 * 1024 * 1024) return { success: false, data: null, message: "Audio file size must be less than 10MB" };
       formData.append("speak", audioFile);
@@ -240,7 +242,8 @@ export const formatItem = (item, lang = "en") => {
     hasImage: !!item.image_icon,
     hasAudio: !!audioUrl,
     audioUrl,
-    speakText: audioUrl ? "Has audio" : "No audio",
+    // If no custom audio, device TTS will be used
+    speakText: audioUrl ? "Custom audio" : "TTS (device)",
     buddyMode: item.buddy_mode || false,
   };
 };

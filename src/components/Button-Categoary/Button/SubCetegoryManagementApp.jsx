@@ -314,7 +314,7 @@ const AddForm = ({ onDone, onCancel }) => {
   const [buddyMode, setBuddyMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Full two-way buddy mode inheritance (ON locks ON, OFF locks OFF)
+  // Full two-way buddy mode inheritance
   const parentBuddyMode = selectedMain?.buddy_mode ?? false;
   const parentBuddyLocked = selectedMain !== null;
   const subEffectiveBuddyMode = parentBuddyLocked ? parentBuddyMode : newSubBuddyMode;
@@ -328,6 +328,8 @@ const AddForm = ({ onDone, onCancel }) => {
     const f = e.target.files[0];
     if (f) { setAudioFile(f); setAudioFileName(f.name); }
   };
+
+  const removeAudio = () => { setAudioFile(null); setAudioFileName(''); };
 
   useEffect(() => {
     setMainCatLoading(true);
@@ -351,11 +353,9 @@ const AddForm = ({ onDone, onCancel }) => {
       }
       setSubCatLoading(false);
     });
-    // If parent buddy_mode is true, lock sub to true
     if (selectedMain.buddy_mode) setNewSubBuddyMode(true);
   }, [selectedMain]);
 
-  // When selectedSub changes, if its buddy_mode is true, lock item to true
   useEffect(() => {
     if (selectedSub?.buddy_mode) setBuddyMode(true);
   }, [selectedSub]);
@@ -379,7 +379,7 @@ const AddForm = ({ onDone, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!word.trim()) { toast.error('Word is required'); return; }
-    if (!audioFile) { toast.error('Audio file is required'); return; }
+    // ✅ Audio is NOT required — TTS will be used if no audio file
     setSubmitting(true);
 
     let subCategoryId;
@@ -397,6 +397,7 @@ const AddForm = ({ onDone, onCancel }) => {
     }
 
     toast.loading('Creating item...', { id: 'save' });
+    // audioFile can be null — backend accepts it, app will use TTS
     const itemRes = await createItem(
       subCategoryId, word.trim(), '', color.value, imageFile, audioFile, true, lang, itemEffectiveBuddyMode
     );
@@ -415,7 +416,7 @@ const AddForm = ({ onDone, onCancel }) => {
     <div className="bg-white rounded-2xl shadow-lg p-8 max-w-2xl mx-auto">
       <StepBreadcrumb mainCat={selectedMain} subCat={subCatForCrumb} activeStep={step} />
 
-      {/* ── STEP 1: Main Category ── */}
+      {/* ── STEP 1 ── */}
       {step === 1 && (
         <div>
           <h2 className="text-xl font-bold text-gray-800 mb-1">Choose Main Category</h2>
@@ -442,62 +443,39 @@ const AddForm = ({ onDone, onCancel }) => {
         </div>
       )}
 
-      {/* ── STEP 2: Sub-Category ── */}
+      {/* ── STEP 2 ── */}
       {step === 2 && (
         <div>
           <h2 className="text-xl font-bold text-gray-800 mb-1">Sub-Category</h2>
           <p className="text-sm text-gray-400 mb-6">
             Pick an existing one under <span className="font-semibold text-gray-700">{getCatName(selectedMain)}</span> or create a new one.
           </p>
-
           <div className="flex gap-2 mb-4">
             {['existing', 'new'].map(m => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setSubCatMode(m)}
+              <button key={m} type="button" onClick={() => setSubCatMode(m)}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold border uppercase tracking-wide transition-all ${
-                  subCatMode === m
-                    ? 'bg-amber-400 border-amber-400 text-gray-900'
-                    : 'bg-white border-gray-200 text-gray-400 hover:border-amber-300'
-                }`}
-              >
+                  subCatMode === m ? 'bg-amber-400 border-amber-400 text-gray-900' : 'bg-white border-gray-200 text-gray-400 hover:border-amber-300'
+                }`}>
                 {m === 'existing' ? '📂 Use Existing' : '✨ Create New'}
               </button>
             ))}
           </div>
-
           {subCatMode === 'existing' ? (
-            <SmartDropdown
-              value={selectedSub}
-              options={subCategories}
-              onSelect={setSelectedSub}
-              placeholder="Select sub-category..."
-              loading={subCatLoading}
-              renderName={getCatName}
-            />
+            <SmartDropdown value={selectedSub} options={subCategories} onSelect={setSelectedSub}
+              placeholder="Select sub-category..." loading={subCatLoading} renderName={getCatName} />
           ) : (
             <div className="space-y-4">
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">New Sub-Category Name</p>
-                <input
-                  type="text" value={newSubName} onChange={e => setNewSubName(e.target.value)}
+                <input type="text" value={newSubName} onChange={e => setNewSubName(e.target.value)}
                   placeholder="e.g. Animals, Colors, Food..."
-                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all"
-                />
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all" />
               </div>
-              {/* Lang for new sub-cat */}
               <LangPills value={newSubLang} onChange={setNewSubLang} />
-              {/* Buddy mode for new sub-cat */}
-              <BuddyModeToggle
-                value={subEffectiveBuddyMode}
-                onChange={setNewSubBuddyMode}
-                locked={parentBuddyLocked}
-                lockedReason={parentBuddyMode ? "Parent has Buddy Mode ON - sub-category must also be ON" : "Parent has Buddy Mode OFF - sub-category must also be OFF"}
-              />
+              <BuddyModeToggle value={subEffectiveBuddyMode} onChange={setNewSubBuddyMode} locked={parentBuddyLocked}
+                lockedReason={parentBuddyMode ? "Parent has Buddy Mode ON" : "Parent has Buddy Mode OFF"} />
             </div>
           )}
-
           <div className="flex gap-3 mt-8">
             <button type="button" onClick={() => setStep(1)} className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">← Back</button>
             <button type="button" onClick={goToStep3} className="flex-1 px-5 py-2.5 bg-amber-400 hover:bg-amber-500 rounded-xl text-sm font-bold text-gray-900 transition-colors">Next →</button>
@@ -505,14 +483,13 @@ const AddForm = ({ onDone, onCancel }) => {
         </div>
       )}
 
-      {/* ── STEP 3: Item Details ── */}
+      {/* ── STEP 3 ── */}
       {step === 3 && (
         <form onSubmit={handleSubmit}>
           <h2 className="text-xl font-bold text-gray-800 mb-1">Item Details</h2>
           <p className="text-sm text-gray-400 mb-6">Fill in the button/item info.</p>
 
           <div className="space-y-5">
-            {/* Language */}
             <LangPills value={lang} onChange={setLang} />
 
             {/* Word */}
@@ -522,10 +499,13 @@ const AddForm = ({ onDone, onCancel }) => {
                 className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all" />
             </div>
 
-            {/* Audio */}
+            {/* ── AUDIO — OPTIONAL with TTS notice ── */}
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                Speak Audio * <span className="normal-case font-normal text-gray-400">MP3 file, required</span>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                Speak Audio <span className="normal-case font-normal text-gray-400">(Optional)</span>
+              </p>
+              <p className="text-xs text-blue-500 mb-2">
+                💬 No audio? Device TTS will speak the word automatically.
               </p>
               {audioFileName ? (
                 <div className="flex items-center gap-4 p-4 border border-amber-200 bg-amber-50 rounded-xl">
@@ -536,12 +516,15 @@ const AddForm = ({ onDone, onCancel }) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-800 truncate">{audioFileName}</p>
-                    <p className="text-xs text-gray-400">Audio ready</p>
+                    <p className="text-xs text-gray-400">Custom audio ready</p>
                   </div>
-                  <label className="cursor-pointer text-xs font-bold text-amber-600 hover:text-amber-700 flex-shrink-0">
-                    Change
-                    <input type="file" className="sr-only" onChange={handleAudioChange} accept="audio/*,.mp3,.wav,.ogg,.m4a" />
-                  </label>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <label className="cursor-pointer text-xs font-bold text-amber-600 hover:text-amber-700">
+                      Change
+                      <input type="file" className="sr-only" onChange={handleAudioChange} accept="audio/*,.mp3,.wav,.ogg,.m4a" />
+                    </label>
+                    <button type="button" onClick={removeAudio} className="text-xs font-bold text-red-400 hover:text-red-600">Remove</button>
+                  </div>
                 </div>
               ) : (
                 <label className="flex items-center gap-4 p-4 border-2 border-dashed border-gray-200 rounded-xl hover:border-amber-300 hover:bg-amber-50/30 cursor-pointer transition-all group">
@@ -551,7 +534,7 @@ const AddForm = ({ onDone, onCancel }) => {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-500 group-hover:text-amber-600 transition-colors">Upload audio file</p>
+                    <p className="text-sm font-semibold text-gray-500 group-hover:text-amber-600 transition-colors">Upload custom audio (optional)</p>
                     <p className="text-xs text-gray-400">MP3, WAV, M4A — max 10MB</p>
                   </div>
                   <input type="file" className="sr-only" onChange={handleAudioChange} accept="audio/*,.mp3,.wav,.ogg,.m4a" />
@@ -559,16 +542,10 @@ const AddForm = ({ onDone, onCancel }) => {
               )}
             </div>
 
-            {/* Color */}
             <ColorPicker selected={color} onSelect={setColor} />
 
-            {/* Buddy Mode */}
-            <BuddyModeToggle
-              value={itemEffectiveBuddyMode}
-              onChange={setBuddyMode}
-              locked={subParentLocked}
-              lockedReason={subParentBuddyMode ? "Sub-category has Buddy Mode ON - item must also be ON" : "Sub-category has Buddy Mode OFF - item must also be OFF"}
-            />
+            <BuddyModeToggle value={itemEffectiveBuddyMode} onChange={setBuddyMode} locked={subParentLocked}
+              lockedReason={subParentBuddyMode ? "Sub-category has Buddy Mode ON" : "Sub-category has Buddy Mode OFF"} />
 
             {/* Image */}
             <div>
@@ -610,7 +587,6 @@ const AddForm = ({ onDone, onCancel }) => {
 
 // ─── EDIT FORM ────────────────────────────────────────────────
 const EditForm = ({ item, onDone, onCancel }) => {
-  // Detect existing lang/word from translations
   const existingLang = Object.keys(item.translations || {})[0] || 'en';
   const existingWord = item.translations?.[existingLang]?.word || item.word || '';
   const existingAudioUrl = item.translations?.[existingLang]?.speak || null;
@@ -625,7 +601,6 @@ const EditForm = ({ item, onDone, onCancel }) => {
   const [buddyMode, setBuddyMode] = useState(item?.buddy_mode || false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Is parent sub-category buddy_mode locked?
   const parentBuddyLocked = item.subCategoryBuddyMode || false;
   const effectiveBuddyMode = parentBuddyLocked ? true : buddyMode;
 
@@ -641,7 +616,7 @@ const EditForm = ({ item, onDone, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!word.trim()) { toast.error('Word is required'); return; }
-    if (!audioFile && !existingAudioUrl) { toast.error('Audio file is required'); return; }
+    // ✅ Audio NOT required — existing audio stays, or TTS will be used
     setSubmitting(true);
     toast.loading('Updating...', { id: 'edit' });
     const res = await updateItem(item.id, word.trim(), '', color.value, imageFile, audioFile, true, lang, effectiveBuddyMode);
@@ -653,7 +628,6 @@ const EditForm = ({ item, onDone, onCancel }) => {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 max-w-2xl mx-auto">
-      {/* Context breadcrumb */}
       <div className="flex items-center gap-1.5 flex-wrap mb-8">
         {[
           { emoji: '📁', label: item.mainCategoryName || 'Main' },
@@ -677,7 +651,6 @@ const EditForm = ({ item, onDone, onCancel }) => {
       <p className="text-sm text-gray-400 mb-6">Update the details below.</p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Language */}
         <LangPills value={lang} onChange={setLang} />
 
         {/* Word */}
@@ -687,10 +660,13 @@ const EditForm = ({ item, onDone, onCancel }) => {
             className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all" />
         </div>
 
-        {/* Audio */}
+        {/* ── AUDIO — OPTIONAL with TTS notice ── */}
         <div>
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            Speak Audio * <span className="normal-case font-normal text-gray-400">MP3 file</span>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+            Speak Audio <span className="normal-case font-normal text-gray-400">(Optional)</span>
+          </p>
+          <p className="text-xs text-blue-500 mb-2">
+            💬 No audio? Device TTS will speak the word automatically.
           </p>
           {audioFileName ? (
             <div className="flex items-center gap-4 p-4 border border-amber-200 bg-amber-50 rounded-xl">
@@ -716,7 +692,7 @@ const EditForm = ({ item, onDone, onCancel }) => {
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-700">Existing audio file</p>
+                <p className="text-sm font-semibold text-gray-700">Custom audio file exists</p>
                 <p className="text-xs text-gray-400">Upload a new file to replace it</p>
               </div>
               <label className="cursor-pointer text-xs font-bold text-amber-600 hover:text-amber-700 flex-shrink-0">
@@ -732,7 +708,7 @@ const EditForm = ({ item, onDone, onCancel }) => {
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-500 group-hover:text-amber-600 transition-colors">Upload audio file</p>
+                <p className="text-sm font-semibold text-gray-500 group-hover:text-amber-600 transition-colors">Upload custom audio (optional)</p>
                 <p className="text-xs text-gray-400">MP3, WAV, M4A — max 10MB</p>
               </div>
               <input type="file" className="sr-only" onChange={handleAudioChange} accept="audio/*,.mp3,.wav,.ogg,.m4a" />
@@ -740,16 +716,10 @@ const EditForm = ({ item, onDone, onCancel }) => {
           )}
         </div>
 
-        {/* Color */}
         <ColorPicker selected={color} onSelect={setColor} />
 
-        {/* Buddy Mode */}
-        <BuddyModeToggle
-          value={effectiveBuddyMode}
-          onChange={setBuddyMode}
-          locked={parentBuddyLocked}
-          lockedReason="Sub-category has Buddy Mode ON — item must also be ON"
-        />
+        <BuddyModeToggle value={effectiveBuddyMode} onChange={setBuddyMode} locked={parentBuddyLocked}
+          lockedReason="Sub-category has Buddy Mode ON — item must also be ON" />
 
         {/* Image */}
         <div>
@@ -783,6 +753,50 @@ const EditForm = ({ item, onDone, onCancel }) => {
   );
 };
 
+// ─── TTS PREVIEW BUTTON ──────────────────────────────────────
+const TTSPreviewButton = ({ word }) => {
+  const [speaking, setSpeaking] = useState(false);
+
+  const handleSpeak = () => {
+    if (!window.speechSynthesis) return;
+
+    if (speaking) {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.onstart = () => setSpeaking(true);
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  return (
+    <button
+      onClick={handleSpeak}
+      title={speaking ? 'Stop TTS' : `Preview TTS: "${word}"`}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+        speaking
+          ? 'bg-blue-400 text-white shadow-sm scale-95'
+          : 'bg-blue-50 text-blue-500 border border-blue-100 hover:bg-blue-100 hover:text-blue-700'
+      }`}
+    >
+      {speaking ? (
+        <svg className="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+        </svg>
+      ) : (
+        <svg className="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+        </svg>
+      )}
+      {speaking ? 'Stop' : '🔊 TTS'}
+    </button>
+  );
+};
+
 // ─── AUDIO PLAY BUTTON ───────────────────────────────────────
 const AudioPlayButton = ({ src, playingId, itemId, onPlay }) => {
   const isPlaying = playingId === itemId;
@@ -792,7 +806,7 @@ const AudioPlayButton = ({ src, playingId, itemId, onPlay }) => {
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
         isPlaying ? 'bg-amber-400 text-gray-900 shadow-sm scale-95' : 'bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700'
       }`}
-      title={isPlaying ? 'Pause' : 'Play audio'}
+      title={isPlaying ? 'Pause' : 'Play'}
     >
       {isPlaying ? (
         <svg className="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
@@ -861,14 +875,11 @@ const ItemsTable = ({ items, onEdit, onDelete, loading, searchQuery, onSearchCha
             <tbody className="divide-y divide-gray-50">
               {filtered.length > 0 ? filtered.map(item => {
                 const fmt = formatItem(item);
-                // Translations: show all langs available
                 const langs = Object.keys(item.translations || {});
-                // Find first audio URL
                 const audioUrl = langs.map(l => item.translations[l]?.speak).find(s => s && (s.startsWith('http') || s.startsWith('/'))) || null;
 
                 return (
                   <tr key={item.id} className="hover:bg-amber-50/30 transition-colors">
-                    {/* Path */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1 flex-wrap">
                         <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full font-medium">{item.mainCategoryName || '—'}</span>
@@ -879,7 +890,6 @@ const ItemsTable = ({ items, onEdit, onDelete, loading, searchQuery, onSearchCha
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-gray-800">{fmt.formattedWord}</td>
-                    {/* Language badges */}
                     <td className="px-6 py-4 text-center">
                       <div className="flex gap-1 justify-center flex-wrap">
                         {langs.map(l => (
@@ -887,11 +897,11 @@ const ItemsTable = ({ items, onEdit, onDelete, loading, searchQuery, onSearchCha
                         ))}
                       </div>
                     </td>
-                    {/* Audio */}
+                    {/* Audio — shows custom audio or TTS indicator */}
                     <td className="px-6 py-4 flex items-center justify-center">
                       {audioUrl
                         ? <AudioPlayButton src={audioUrl} itemId={item.id} playingId={playingId} onPlay={handlePlay} />
-                        : <span className="text-gray-200 text-xs">—</span>
+                        : <TTSPreviewButton word={item.word || fmt.formattedWord} />
                       }
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -903,12 +913,9 @@ const ItemsTable = ({ items, onEdit, onDelete, loading, searchQuery, onSearchCha
                     <td className="px-6 py-4 text-center">
                       <div className="h-7 w-7 mx-auto rounded-full border border-gray-100 shadow-sm" style={{ backgroundColor: fmt.displayColor }} />
                     </td>
-                    {/* Buddy Mode badge */}
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                        item.buddy_mode
-                          ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                          : 'bg-gray-100 text-gray-400 border border-gray-200'
+                        item.buddy_mode ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-gray-100 text-gray-400 border border-gray-200'
                       }`}>
                         <span className={`h-1.5 w-1.5 rounded-full ${item.buddy_mode ? 'bg-amber-500' : 'bg-gray-400'}`} />
                         {item.buddy_mode ? 'ON' : 'OFF'}
@@ -916,10 +923,8 @@ const ItemsTable = ({ items, onEdit, onDelete, loading, searchQuery, onSearchCha
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2 justify-center">
-                        <button onClick={() => onEdit(item)}
-                          className="px-3.5 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">Edit</button>
-                        <button onClick={() => onDelete(item.id, fmt.formattedWord)}
-                          className="px-3.5 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">Delete</button>
+                        <button onClick={() => onEdit(item)} className="px-3.5 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">Edit</button>
+                        <button onClick={() => onDelete(item.id, fmt.formattedWord)} className="px-3.5 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -988,7 +993,6 @@ export default function SubCategoryManagement() {
         subCategoryId: r.subCategoryId,
         subCategoryName: r.subCategoryName,
         subCategoryBuddyMode: r.subCategoryBuddyMode,
-        // Resolve word from translations
         word: item.translations?.en?.word || item.translations?.es?.word || item.word || '',
       }))
     );
